@@ -1,40 +1,44 @@
 /* Font Imports */
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300,400,500,600&family=JetBrains+Mono:wght@300,400,500&family=Noto+Sans+Thai:wght@300,400,500,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Thai:wght@400;500;600&display=swap');
 
-/* Glassmorphism Dark Theme Design Tokens */
+/* Subtle Light Theme Design Tokens */
 :root {
   /* Dynamic Theme Color - Set by page based on AQI */
   --theme-color: 255, 160, 0;
   
-  /* Dark Base Colors for Glassmorphism */
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-tertiary: #1a1a25;
-  --color-surface: rgba(255, 255, 255, 0.05);
+  /* Light Base Colors - Rice Paper White Theme */
+  --color-bg-primary: #FDFCF8;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F5F4F0;
+  --color-surface: #FFFFFF;
   
-  /* Glass Colors */
-  --color-glass-bg: rgba(255, 255, 255, 0.08);
-  --color-glass-border: rgba(255, 255, 255, 0.15);
-  --color-glass-border-light: rgba(255, 255, 255, 0.25);
+  /* Card/Surface with subtle warmth */
+  --color-glass-bg: rgba(255, 255, 255, 0.8);
+  --color-glass-border: rgba(231, 229, 228, 0.6);
+  --color-glass-border-light: rgba(231, 229, 228, 0.8);
   
-  /* Text Colors for Dark Background */
-  --color-text-primary: rgba(255, 255, 255, 0.95);
-  --color-text-secondary: rgba(255, 255, 255, 0.75);
-  --color-text-muted: rgba(255, 255, 255, 0.55);
-  --color-text-dim: rgba(255, 255, 255, 0.35);
+  /* Text Colors for Light Background */
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #78716C;
+  --color-text-muted: #A8A29E;
+  --color-text-dim: #D6D3D1;
   
-  /* Accent - AQI Colors (Glow-ready) */
-  --color-aqi-good: #4ade80;
-  --color-aqi-moderate: #facc15;
-  --color-aqi-sensitive: #fb923c;
-  --color-aqi-unhealthy: #f87171;
-  --color-aqi-very-unhealthy: #c084fc;
-  --color-aqi-hazardous: #dc2626;
+  /* Lake Teal Accent */
+  --color-lake-teal: #0D9488;
+  --color-lake-teal-dim: rgba(13, 148, 136, 0.1);
+  
+  /* Accent - AQI Colors */
+  --color-aqi-good: #00E400;
+  --color-aqi-moderate: #FFFF00;
+  --color-aqi-sensitive: #FF7E00;
+  --color-aqi-unhealthy: #FF0000;
+  --color-aqi-very-unhealthy: #8F3F97;
+  --color-aqi-hazardous: #7E0023;
 
   /* Typography */
   --font-display: 'Satoshi', system-ui, -apple-system, sans-serif;
-  --font-body: 'Inter', 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-thai: 'Noto Sans Thai', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
 
@@ -215,7 +219,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -249,10 +253,10 @@ body {
 /* High Contrast Mode */
 @media (prefers-contrast: high) {
   :root {
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #e0e0e0;
-    --color-glass-bg: rgba(255, 255, 255, 0.15);
-    --color-glass-border: rgba(255, 255, 255, 0.4);
+    --color-text-primary: #000000;
+    --color-text-secondary: #1C1917;
+    --color-glass-bg: rgba(255, 255, 255, 0.95);
+    --color-glass-border: rgba(0, 0, 0, 0.3);
   }
 }
 
