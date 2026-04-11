@@ -210,3 +210,11 @@ jobs:
           git add src/data/pm25-history.json
           git commit -m "Update PM2.5 data: $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
+
+      - name: Trigger Cloudflare Pages Rebuild
+        if: success() && secrets.CLOUDFLARE_DEPLOY_HOOK != ''
+        run: |
+          echo "Triggering Cloudflare Pages rebuild..."
+          curl -X POST "${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}"
+        env:
+          CLOUDFLARE_DEPLOY_HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
