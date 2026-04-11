@@ -1,174 +1,101 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LiquidBackground from '../components/LiquidBackground.astro';
-import LocationHeader from '../components/LocationHeader.astro';
-import PM25Hero from '../components/PM25Hero.astro';
-import HealthCard from '../components/HealthCard.astro';
-import LastUpdated from '../components/LastUpdated.astro';
+import GlassCard from '../components/GlassCard.astro';
 
-// Load data from JSON file
+// Load data
 import data from '../data/pm25-history.json';
 
-// Get latest reading (if any)
 const latest = data.readings[data.readings.length - 1];
 const station = data.station;
 
-// Fallback data
-const fallbackData = {
-  pm25: 25,
-  us_aqi: 82,
-  us_title: 'คุณภาพอากาศปานกลาง',
-  us_title_en: 'Moderate',
-  us_caption: 'ประชาชนทั่วไปควรเฝ้าระวังสุขภาพ',
-  us_caption_en: 'Air quality is acceptable. However, there may be a risk for some people.',
-  us_color: '255,255,0',
-  datetime: new Date().toISOString().replace('T', ' ').slice(0, 19)
+const fallback = {
+  pm25: 54,
+  us_aqi: 147,
+  us_title: 'คุณภาพอากาศไม่ดีต่อกลุ่มเสี่ยง',
+  us_title_en: 'Unhealthy for Sensitive Groups',
+  us_caption: 'ประชาชนที่ไวต่อมลพิษมากกว่าคนทั่วไปควรลดการออกแรงหนัก',
+  us_caption_en: 'Members of sensitive groups may experience health effects. The general public is not likely to be affected.',
+  us_color: '235, 132, 63',
+  datetime: new Date().toISOString()
 };
 
-const reading = latest || fallbackData;
+const r = latest || fallback;
 
-function getAQILevel(usAqi: number): 'good' | 'moderate' | 'sensitive' | 'unhealthy' | 'very-unhealthy' | 'hazardous' {
-  if (usAqi <= 50) return 'good';
-  if (usAqi <= 100) return 'moderate';
-  if (usAqi <= 150) return 'sensitive';
-  if (usAqi <= 200) return 'unhealthy';
-  if (usAqi <= 300) return 'very-unhealthy';
-  return 'hazardous';
-}
-
-const aqiLevel = getAQILevel(reading.us_aqi);
-
-const assetMap: Record<string, { favicon: string; ogImage: string }> = {
-  'good': { favicon: '/favicon/favicon-good.svg', ogImage: '/og/og-aqi-good.svg' },
-  'moderate': { favicon: '/favicon/favicon-moderate.svg', ogImage: '/og/og-aqi-moderate.svg' },
-  'sensitive': { favicon: '/favicon/favicon-sensitive.svg', ogImage: '/og/og-aqi-sensitive.svg' },
-  'unhealthy': { favicon: '/favicon/favicon-unhealthy.svg', ogImage: '/og/og-aqi-unhealthy.svg' },
-  'very-unhealthy': { favicon: '/favicon/favicon-very-unhealthy.svg', ogImage: '/og/og-aqi-very-unhealthy.svg' },
-  'hazardous': { favicon: '/favicon/favicon-hazardous.svg', ogImage: '/og/og-aqi-hazardous.svg' }
-};
-
-const assets = assetMap[aqiLevel];
-
-const pageTitle = `${reading.us_title_en} — PM2.5 Sakon Nakhon`;
-const pageDescription = `${station?.name_en || 'Sraphangthong pond'} — PM2.5 is ${reading.pm25} μg/m³`;
-
-// Clean station name
-const stationNameEn = station?.name_en || 'Sraphangthong pond, Somdej Phra Srinakarin Park, Sakon Nakhon Province';
-// Extract just "Sraphangthong pond, Sakon Nakhon" for display
-const displayLocation = stationNameEn
+// Clean location
+const location = (station?.name_en || 'Sraphangthong pond, Somdej Phra Srinakarin Park, Sakon Nakhon Province')
   .replace('Somdej Phra Srinakarin Park, ', '')
   .replace(' Province', '');
+
+const aqiLevel = r.us_aqi <= 50 ? 'good' : 
+                 r.us_aqi <= 100 ? 'moderate' : 
+                 r.us_aqi <= 150 ? 'sensitive' : 
+                 r.us_aqi <= 200 ? 'unhealthy' : 
+                 r.us_aqi <= 300 ? 'very-unhealthy' : 'hazardous';
+
+const assets = {
+  good: { favicon: '/favicon/favicon-good.svg', ogImage: '/og/og-aqi-good.svg' },
+  moderate: { favicon: '/favicon/favicon-moderate.svg', ogImage: '/og/og-aqi-moderate.svg' },
+  sensitive: { favicon: '/favicon/favicon-sensitive.svg', ogImage: '/og/og-aqi-sensitive.svg' },
+  unhealthy: { favicon: '/favicon/favicon-unhealthy.svg', ogImage: '/og/og-aqi-unhealthy.svg' },
+  'very-unhealthy': { favicon: '/favicon/favicon-very-unhealthy.svg', ogImage: '/og/og-aqi-very-unhealthy.svg' },
+  hazardous: { favicon: '/favicon/favicon-hazardous.svg', ogImage: '/og/og-aqi-hazardous.svg' }
+}[aqiLevel];
 ---
 
 <Layout 
-  title={pageTitle}
-  description={pageDescription}
+  title={`${r.us_title_en} — PM2.5 Sakon Nakhon`}
+  description={`${location} — PM2.5 is ${r.pm25} μg/m³ (AQI ${r.us_aqi})`}
   ogImage={assets.ogImage}
   favicon={assets.favicon}
   aqiLevel={aqiLevel}
 >
-  <div class="light-theme">
-    <!-- Animated liquid gradient background -->
-    <LiquidBackground pm25={reading.pm25} usColor={reading.us_color} />
+  <div class="app">
+    <!-- Animated liquid background -->
+    <LiquidBackground pm25={r.pm25} usColor={r.us_color} />
     
-    <main class="dashboard">
-      <div class="container">
-        
-        <!-- Header -->
-        <header class="section">
-          <LocationHeader 
-            nameEn={displayLocation}
-          />
-        </header>
-        
-        <!-- Hero PM2.5 Display -->
-        <section class="section hero-section" aria-label="PM2.5 Level">
-          <PM25Hero pm25={reading.pm25} />
-        </section>
-        
-        <!-- Health Info Card -->
-        <section class="section card-section" aria-label="Health Recommendation">
-          <HealthCard 
-            usTitle={reading.us_title}
-            usTitleEn={reading.us_title_en}
-            usCaption={reading.us_caption}
-            usCaptionEn={reading.us_caption_en}
-          />
-        </section>
-        
-        <!-- Footer -->
-        <footer class="section footer-section">
-          <LastUpdated logDatetime={reading.datetime} />
-        </footer>
-        
-      </div>
+    <!-- Centered glass card with all content -->
+    <main class="centered">
+      <GlassCard 
+        location={location}
+        pm25={r.pm25}
+        aqi={r.us_aqi}
+        usTitle={r.us_title}
+        usTitleEn={r.us_title_en}
+        usCaption={r.us_caption}
+        usCaptionEn={r.us_caption_en}
+        datetime={r.datetime}
+      />
     </main>
   </div>
 </Layout>
 
 <style>
-  .light-theme {
+  .app {
     min-height: 100dvh;
+    position: relative;
     /* Light gray base */
     background: linear-gradient(
       180deg,
-      #9ca0a8 0%,
-      #a8acb4 50%,
-      #b4b8c0 100%
+      #a0a4ac 0%,
+      #b0b4bc 50%,
+      #c0c4cc 100%
     );
-    position: relative;
   }
 
-  .dashboard {
+  .centered {
     position: relative;
     z-index: 2;
     min-height: 100dvh;
-    padding: 2rem 1.5rem 1.5rem;
     display: flex;
-    flex-direction: column;
-  }
-
-  .container {
-    max-width: 560px;
-    margin: 0 auto;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 2rem;
-    flex: 1;
-  }
-
-  .section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .hero-section {
-    margin: 1rem 0;
-  }
-
-  .card-section {
-    margin-top: auto;
-    padding-top: 2rem;
-  }
-
-  .footer-section {
-    padding-top: 2rem;
-    padding-bottom: 0.5rem;
+    justify-content: center;
+    padding: 1.5rem;
   }
 
   @media (min-width: 768px) {
-    .dashboard {
-      padding: 2.5rem 2rem 2rem;
-    }
-
-    .container {
-      gap: 2.5rem;
-      max-width: 600px;
+    .centered {
+      padding: 2rem;
     }
   }
 </style>

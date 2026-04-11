@@ -203,7 +203,7 @@ const palette = getLightPalette(r, g, b);
       this.accent1 = accent1Attr.split(',').map(Number);
       this.accent2 = accent2Attr.split(',').map(Number);
       
-      this.speed = pm25 <= 12 ? 0.2 : pm25 <= 35 ? 0.4 : pm25 <= 55 ? 0.6 : pm25 <= 150 ? 0.8 : 1.0;
+      this.speed = 0.8; // Faster animation for visible movement
       
       this.init();
       this.initParticles();
