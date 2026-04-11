@@ -27,11 +27,21 @@ jobs:
       - name: Fetch and update PM2.5 data
         env:
           CCDC_API_URL: ${{ secrets.CCDC_API_URL }}
+          CCDC_API_KEY: ${{ secrets.CCDC_API_KEY }}
         run: |
           if [ -z "$CCDC_API_URL" ]; then
             echo "Error: CCDC_API_URL secret is not set"
             exit 1
           fi
+
+          if [ -z "$CCDC_API_KEY" ]; then
+            echo "Error: CCDC_API_KEY secret is not set"
+            exit 1
+          fi
+
+          # Build full URL with API key
+          export FULL_API_URL="${CCDC_API_URL}?apikey=${CCDC_API_KEY}"
+          echo "Fetching from CCDC API..."
 
           node << 'EOF'
           const fs = require('fs');
@@ -42,7 +52,7 @@ jobs:
 
           async function fetchData() {
             try {
-              const response = await fetch(process.env.CCDC_API_URL);
+              const response = await fetch(process.env.FULL_API_URL);
               if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
@@ -130,6 +140,7 @@ jobs:
               humid: station.humid,
               us_title: station.us_title,
               us_title_en: station.us_title_en,
+              us_title_th: station.us_title,
               us_caption: station.us_caption,
               us_caption_en: station.us_caption_en
             };
