@@ -42,6 +42,7 @@ jobs:
           # Build full URL with API key
           export FULL_API_URL="${CCDC_API_URL}?apikey=${CCDC_API_KEY}"
           echo "Fetching from CCDC API..."
+          echo "URL: ${CCDC_API_URL}"
 
           node << 'EOF'
           const fs = require('fs');
@@ -65,16 +66,27 @@ jobs:
           }
 
           function findStation(data, id) {
-            if (!Array.isArray(data)) {
-              console.error('API response is not an array');
+            // /station endpoint returns single object, /stations returns array
+            if (Array.isArray(data)) {
+              // Array response - find station by ID
+              const station = data.find(s => s.id === id);
+              if (!station) {
+                console.error(`Station ${id} not found in API response array`);
+                return null;
+              }
+              return station;
+            } else if (data && typeof data === 'object') {
+              // Single object response from /station endpoint
+              if (data.id === id) {
+                return data;
+              }
+              console.error(`Configured station is ${data.id}, expected ${id}`);
+              console.log('Please configure station 4473 at https://open-api.cmuccdc.org/setting');
+              return null;
+            } else {
+              console.error('API response is not valid:', typeof data);
               return null;
             }
-            const station = data.find(s => s.id === id);
-            if (!station) {
-              console.error(`Station ${id} not found in API response`);
-              return null;
-            }
-            return station;
           }
 
           function loadHistory() {
