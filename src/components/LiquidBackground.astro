@@ -9,21 +9,14 @@ const { pm25, usColor } = Astro.props;
 // Parse RGB values
 const [r, g, b] = usColor.split(',').map(Number);
 
-// Generate palette for vibrant orange theme
-function getLightPalette(r: number, g: number, b: number): { bg: string; accent1: string; accent2: string } {
-  // For orange/yellow tones - make them more vibrant
-  if (r > 200 && g > 100 && b < 100) {
-    return {
-      bg: '160, 165, 175',        // Light cool gray base
-      accent1: '235, 120, 50',    // Vibrant orange
-      accent2: '200, 140, 100'    // Soft peach
-    };
-  }
-  // For other colors, adapt with more saturation
+// Generate palette for maximum contrast
+function getLightPalette(r: number, g: number, b: number): { bg: string; accent1: string; accent2: string; accent3: string } {
+  // Maximum contrast colors
   return {
-    bg: '160, 165, 175',
-    accent1: `${Math.min(r + 20, 255)}, ${Math.max(g - 20, 0)}, ${b}`,
-    accent2: '180, 160, 140'
+    bg: '160, 165, 175',        // Cool gray base
+    accent1: '255, 100, 20',    // Deep red-orange (very strong)
+    accent2: '255, 200, 80',    // Bright yellow-gold (very distinct)
+    accent3: '255, 140, 60'     // Medium orange
   };
 }
 
@@ -98,6 +91,7 @@ const palette = getLightPalette(r, g, b);
     uBgColor: WebGLUniformLocation | null;
     uAccent1: WebGLUniformLocation | null;
     uAccent2: WebGLUniformLocation | null;
+    uAccent3: WebGLUniformLocation | null;
     uSpeed: WebGLUniformLocation | null;
   }
 
@@ -111,6 +105,7 @@ const palette = getLightPalette(r, g, b);
       uBgColor: null,
       uAccent1: null,
       uAccent2: null,
+      uAccent3: null,
       uSpeed: null
     };
     private animationId: number = 0;
@@ -118,6 +113,7 @@ const palette = getLightPalette(r, g, b);
     private bgColor: number[];
     private accent1: number[];
     private accent2: number[];
+    private accent3: number[];
     private speed: number;
 
     // Vertex shader
@@ -137,6 +133,7 @@ const palette = getLightPalette(r, g, b);
       uniform vec3 uBgColor;
       uniform vec3 uAccent1;
       uniform vec3 uAccent2;
+      uniform vec3 uAccent3;
       uniform float uSpeed;
       
       // Simple noise
@@ -159,54 +156,57 @@ const palette = getLightPalette(r, g, b);
       
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
-        float time = uTime * uSpeed * 0.12;
+        float time = uTime * uSpeed * 0.15;
         
-        // Base gray background
+        // Base gray background - neutral mid-gray
         vec3 baseColor = uBgColor / 255.0;
         vec3 color = baseColor;
         
-        // Multiple animated blobs with different sizes and speeds
-        // Large orange blob (top-right)
-        float n1 = noise(uv * 0.7 + time * 0.4 + vec2(50.0, 100.0));
-        float blob1 = smoothstep(0.4, 0.7, n1);
-        color = mix(color, uAccent1 / 255.0, blob1 * 0.8);
+        // Additive blending for high contrast - each blob ADDS its color
         
-        // Large peach blob (bottom-left)
-        float n2 = noise(uv * 0.6 - time * 0.35 + vec2(200.0, -50.0));
-        float blob2 = smoothstep(0.35, 0.65, n2);
-        color = mix(color, uAccent2 / 255.0, blob2 * 0.6);
+        // 1. Large RED-ORANGE blob (top-right) - adds warmth
+        float n1 = noise(uv * 0.5 + time * 0.3 + vec2(80.0, 60.0));
+        float blob1 = smoothstep(0.4, 0.8, n1);
+        color += vec3(0.25, 0.08, 0.02) * blob1; // Add red-orange
         
-        // Medium orange blob (center-left, faster)
-        float n3 = noise(uv * 1.2 + time * 0.6 + vec2(-100.0, 150.0));
-        float blob3 = smoothstep(0.3, 0.6, n3);
-        color = mix(color, (uAccent1 * 1.2) / 255.0, blob3 * 0.5);
+        // 2. Large GOLD blob (bottom-left) - adds brightness
+        float n2 = noise(uv * 0.45 - time * 0.4 + vec2(150.0, -60.0));
+        float blob2 = smoothstep(0.35, 0.8, n2);
+        color += vec3(0.2, 0.15, 0.02) * blob2; // Add gold
         
-        // Small fast blob (top)
-        float n4 = noise(uv * 2.0 + time * 0.8 + vec2(0.0, -100.0));
-        float blob4 = smoothstep(0.25, 0.55, n4);
-        color = mix(color, uAccent2 / 255.0, blob4 * 0.4);
+        // 3. Medium orange blob (left side)
+        float n3 = noise(uv * 0.8 + time * 0.5 + vec2(-80.0, 100.0));
+        float blob3 = smoothstep(0.3, 0.75, n3);
+        color += vec3(0.18, 0.08, 0.03) * blob3; // Add orange
         
-        // Drifting gray warm blob (right side)
-        float n5 = noise(uv * 0.9 - time * 0.3 + vec2(300.0, 50.0));
-        float blob5 = smoothstep(0.4, 0.7, n5);
-        color = mix(color, vec3(0.75, 0.72, 0.70), blob5 * 0.35);
+        // 4. Small yellow flash (top) - very bright
+        float n4 = noise(uv * 1.2 + time * 0.8 + vec2(20.0, -100.0));
+        float blob4 = smoothstep(0.2, 0.6, n4);
+        color += vec3(0.25, 0.2, 0.05) * blob4; // Add bright yellow
         
-        // Small accent blob (bottom-right)
-        float n6 = noise(uv * 1.5 + time * 0.5 + vec2(250.0, 200.0));
-        float blob6 = smoothstep(0.3, 0.6, n6);
-        color = mix(color, uAccent1 / 255.0, blob6 * 0.45);
+        // 5. Red accent (right side)
+        float n5 = noise(uv * 0.65 - time * 0.35 + vec2(280.0, 20.0));
+        float blob5 = smoothstep(0.35, 0.75, n5);
+        color += vec3(0.22, 0.05, 0.03) * blob5; // Add red
         
-        // Flowing orange streak (horizontal)
-        float streak = smoothstep(0.3, 0.5, noise(vec2(uv.x * 3.0 + time * 0.7, uv.y * 0.5)));
-        color = mix(color, uAccent1 / 255.0, streak * 0.25);
+        // 6. Orange blob (bottom-right)
+        float n6 = noise(uv * 1.0 + time * 0.6 + vec2(250.0, 180.0));
+        float blob6 = smoothstep(0.25, 0.65, n6);
+        color += vec3(0.2, 0.1, 0.02) * blob6; // Add orange
         
-        // Add subtle noise texture
-        float grain = noise(uv * 800.0) * 0.012;
-        color += grain;
+        // 7. Horizontal amber streak
+        float streak = smoothstep(0.2, 0.5, noise(vec2(uv.x * 3.0 + time * 0.8, uv.y * 0.4)));
+        color += vec3(0.15, 0.1, 0.02) * streak;
         
-        // Soft vignette for depth
-        float vignette = 1.0 - smoothstep(0.3, 1.5, length((uv - 0.5) * 1.3));
-        color = mix(color * 0.88, color, vignette);
+        // Clamp to prevent over-brightness
+        color = clamp(color, 0.0, 1.0);
+        
+        // Subtle grain
+        color += noise(uv * 800.0) * 0.005;
+        
+        // Soft vignette
+        float vignette = 1.0 - smoothstep(0.4, 1.5, length(uv - 0.5));
+        color *= 0.9 + vignette * 0.1;
         
         gl_FragColor = vec4(color, 1.0);
       }
@@ -216,13 +216,20 @@ const palette = getLightPalette(r, g, b);
       this.canvas = canvas;
       
       const bgAttr = canvas.dataset.bg || '140,145,155';
-      const accent1Attr = canvas.dataset.accent1 || '235,132,63';
-      const accent2Attr = canvas.dataset.accent2 || '180,175,170';
+      const accent1Attr = canvas.dataset.accent1 || '255,100,20';
+      const accent2Attr = canvas.dataset.accent2 || '255,200,80';
       const pm25 = parseFloat(canvas.dataset.pm25 || '50');
       
       this.bgColor = bgAttr.split(',').map(Number);
       this.accent1 = accent1Attr.split(',').map(Number);
       this.accent2 = accent2Attr.split(',').map(Number);
+      
+      // accent3 is a mix between accent1 and accent2 for variety
+      this.accent3 = [
+        Math.round((this.accent1[0] + this.accent2[0]) / 2),
+        Math.round((this.accent1[1] + this.accent2[1]) / 2),
+        Math.round((this.accent1[2] + this.accent2[2]) / 2)
+      ];
       
       this.speed = 2.5; // Much faster animation
       
@@ -261,6 +268,7 @@ const palette = getLightPalette(r, g, b);
       this.uniforms.uBgColor = this.gl.getUniformLocation(this.program, 'uBgColor');
       this.uniforms.uAccent1 = this.gl.getUniformLocation(this.program, 'uAccent1');
       this.uniforms.uAccent2 = this.gl.getUniformLocation(this.program, 'uAccent2');
+      this.uniforms.uAccent3 = this.gl.getUniformLocation(this.program, 'uAccent3');
       this.uniforms.uSpeed = this.gl.getUniformLocation(this.program, 'uSpeed');
 
       this.setupGeometry();
@@ -325,6 +333,7 @@ const palette = getLightPalette(r, g, b);
       this.gl.uniform3fv(this.uniforms.uBgColor, this.bgColor);
       this.gl.uniform3fv(this.uniforms.uAccent1, this.accent1);
       this.gl.uniform3fv(this.uniforms.uAccent2, this.accent2);
+      this.gl.uniform3fv(this.uniforms.uAccent3, this.accent3);
       this.gl.uniform1f(this.uniforms.uSpeed, this.speed);
       this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
       this.animationId = requestAnimationFrame(() => this.animate());
