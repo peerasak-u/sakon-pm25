@@ -9,33 +9,39 @@ const { pm25, usColor } = Astro.props;
 // Parse RGB values
 const [r, g, b] = usColor.split(',').map(Number);
 
-// Generate secondary colors based on AQI level
-function getSecondaryColors(r: number, g: number, b: number, pm25: number): string {
-  // For orange/yellow tones (unhealthy), add complementary cool tones
-  if (pm25 > 55) {
-    return '80, 90, 110'; // Blue-gray for contrast
+// Generate palette for vibrant orange theme
+function getLightPalette(r: number, g: number, b: number): { bg: string; accent1: string; accent2: string } {
+  // For orange/yellow tones - make them more vibrant
+  if (r > 200 && g > 100 && b < 100) {
+    return {
+      bg: '160, 165, 175',        // Light cool gray base
+      accent1: '235, 120, 50',    // Vibrant orange
+      accent2: '200, 140, 100'    // Soft peach
+    };
   }
-  // For green tones (good), add subtle warm accent
-  if (pm25 <= 35) {
-    return '200, 180, 160'; // Warm beige
-  }
-  // For yellow/orange tones, add red accent
-  return '220, 100, 80'; // Coral red
+  // For other colors, adapt with more saturation
+  return {
+    bg: '160, 165, 175',
+    accent1: `${Math.min(r + 20, 255)}, ${Math.max(g - 20, 0)}, ${b}`,
+    accent2: '180, 160, 140'
+  };
 }
 
-const secondaryColor = getSecondaryColors(r, g, b, pm25);
+const palette = getLightPalette(r, g, b);
 ---
 
 <canvas 
   id="liquid-canvas" 
   class="liquid-background"
-  data-primary={usColor}
-  data-secondary={secondaryColor}
+  data-bg={palette.bg}
+  data-accent1={palette.accent1}
+  data-accent2={palette.accent2}
   data-pm25={pm25}
   aria-hidden="true"
 ></canvas>
 
-<div class="vignette-overlay"></div>
+<!-- Floating particles overlay -->
+<div class="particles" id="particles" aria-hidden="true"></div>
 
 <style>
   .liquid-background {
@@ -48,7 +54,7 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
     pointer-events: none;
   }
 
-  .vignette-overlay {
+  .particles {
     position: fixed;
     top: 0;
     left: 0;
@@ -56,12 +62,32 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
     height: 100%;
     z-index: 1;
     pointer-events: none;
-    background: radial-gradient(
-      ellipse 80% 80% at 50% 50%,
-      transparent 0%,
-      transparent 50%,
-      rgba(20, 20, 25, 0.4) 100%
-    );
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float-up linear infinite;
+  }
+
+  @keyframes float-up {
+    0% {
+      transform: translateY(100vh) scale(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateY(-10vh) scale(1);
+      opacity: 0;
+    }
   }
 </style>
 
@@ -69,8 +95,9 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
   interface Uniforms {
     uTime: WebGLUniformLocation | null;
     uResolution: WebGLUniformLocation | null;
-    uPrimaryColor: WebGLUniformLocation | null;
-    uSecondaryColor: WebGLUniformLocation | null;
+    uBgColor: WebGLUniformLocation | null;
+    uAccent1: WebGLUniformLocation | null;
+    uAccent2: WebGLUniformLocation | null;
     uSpeed: WebGLUniformLocation | null;
   }
 
@@ -81,17 +108,19 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
     private uniforms: Uniforms = {
       uTime: null,
       uResolution: null,
-      uPrimaryColor: null,
-      uSecondaryColor: null,
+      uBgColor: null,
+      uAccent1: null,
+      uAccent2: null,
       uSpeed: null
     };
     private animationId: number = 0;
     private startTime: number = Date.now();
-    private primaryColor: number[];
-    private secondaryColor: number[];
+    private bgColor: number[];
+    private accent1: number[];
+    private accent2: number[];
     private speed: number;
 
-    // Vertex shader - simple fullscreen quad
+    // Vertex shader
     private vertexShaderSource = `
       attribute vec2 aPosition;
       void main() {
@@ -99,98 +128,64 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
       }
     `;
 
-    // Fragment shader - liquid gradient mesh
+    // Fragment shader - light theme with large soft blobs
     private fragmentShaderSource = `
       precision mediump float;
       
       uniform float uTime;
       uniform vec2 uResolution;
-      uniform vec3 uPrimaryColor;
-      uniform vec3 uSecondaryColor;
+      uniform vec3 uBgColor;
+      uniform vec3 uAccent1;
+      uniform vec3 uAccent2;
       uniform float uSpeed;
       
-      // Simplex noise functions
-      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-      vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-      vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
-      
-      float snoise(vec2 v) {
-        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-                            -0.577350269189626, 0.024390243902439);
-        vec2 i  = floor(v + dot(v, C.yy));
-        vec2 x0 = v - i + dot(i, C.xx);
-        vec2 i1;
-        i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-        vec4 x12 = x0.xyxy + C.xxzz;
-        x12.xy -= i1;
-        i = mod289(i);
-        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0))
-                        + i.x + vec3(0.0, i1.x, 1.0));
-        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
-                                dot(x12.zw,x12.zw)), 0.0);
-        m = m*m;
-        m = m*m;
-        vec3 x = 2.0 * fract(p * C.www) - 1.0;
-        vec3 h = abs(x) - 0.5;
-        vec3 ox = floor(x + 0.5);
-        vec3 a0 = x - ox;
-        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
-        vec3 g;
-        g.x = a0.x * x0.x + h.x * x0.y;
-        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-        return 130.0 * dot(m, g);
+      // Simple noise
+      float rand(vec2 n) { 
+        return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
       }
       
-      // FBM (Fractal Brownian Motion)
-      float fbm(vec2 p) {
-        float value = 0.0;
-        float amplitude = 0.5;
-        float frequency = 1.0;
-        for (int i = 0; i < 6; i++) {
-          value += amplitude * snoise(p * frequency);
-          amplitude *= 0.5;
-          frequency *= 2.0;
-        }
-        return value;
+      float noise(vec2 p) {
+        vec2 ip = floor(p);
+        vec2 u = fract(p);
+        u = u * u * (3.0 - 2.0 * u);
+        
+        float res = mix(
+          mix(rand(ip), rand(ip + vec2(1.0, 0.0)), u.x),
+          mix(rand(ip + vec2(0.0, 1.0)), rand(ip + vec2(1.0, 1.0)), u.x),
+          u.y
+        );
+        return res;
       }
       
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
-        vec2 aspect = vec2(uResolution.x / uResolution.y, 1.0);
+        float time = uTime * uSpeed * 0.05;
         
-        // Create flowing organic shapes
-        float time = uTime * uSpeed * 0.1;
+        // Create large soft blob shapes - larger scale
+        float n1 = noise(uv * 1.5 + time * 0.3);
+        float n2 = noise(uv * 1.0 - time * 0.25 + vec2(100.0));
+        float n3 = noise(uv * 0.8 + time * 0.15 + vec2(200.0));
         
-        // Multiple layers of noise for liquid effect
-        vec2 q = vec2(0.0);
-        q.x = fbm(uv * 2.0 + time * 0.3);
-        q.y = fbm(uv * 2.0 + vec2(1.0));
+        // Large blob mask - more contrast
+        float blob1 = smoothstep(0.35, 0.65, n1);
+        float blob2 = smoothstep(0.3, 0.7, n2);
+        float blob3 = smoothstep(0.4, 0.6, n3);
         
-        vec2 r = vec2(0.0);
-        r.x = fbm(uv * 2.0 + q + vec2(1.7, 9.2) + time * 0.15);
-        r.y = fbm(uv * 2.0 + q + vec2(8.3, 2.8) + time * 0.126);
+        // Base gray background
+        vec3 baseColor = uBgColor / 255.0;
         
-        float f = fbm(uv * 2.0 + r);
+        // Mix in accent colors for blobs - stronger influence
+        vec3 color = mix(baseColor, uAccent1 / 255.0, blob1 * 0.7);
+        color = mix(color, uAccent2 / 255.0, blob2 * 0.5);
+        color = mix(color, (uAccent1 + uAccent2) / 510.0, blob3 * 0.3);
         
-        // Create blobby shapes
-        float blob1 = smoothstep(0.0, 1.0, f);
-        float blob2 = smoothstep(0.2, 0.8, fbm(uv * 1.5 + time * 0.2));
+        // Add subtle noise texture
+        float grain = noise(uv * 500.0) * 0.015;
+        color += grain;
         
-        // Mix colors based on noise
-        vec3 color = mix(uPrimaryColor / 255.0, uSecondaryColor / 255.0, clamp(blob1 + blob2, 0.0, 1.0));
-        
-        // Add gradient variation
-        color = mix(color, uPrimaryColor / 255.0 * 1.2, smoothstep(0.3, 0.7, uv.y));
-        
-        // Add subtle brightness variation
-        color *= 0.8 + 0.4 * f;
-        
-        // Darken overall for glassmorphism contrast
-        color = mix(color, vec3(0.1, 0.1, 0.12), 0.3);
-        
-        // Add subtle fog/glow
-        float vignette = 1.0 - smoothstep(0.3, 1.2, length((uv - 0.5) * 1.5));
-        color *= 0.7 + 0.3 * vignette;
+        // Soft vignette for depth
+        float vignette = 1.0 - smoothstep(0.4, 1.4, length((uv - 0.5) * 1.2));
+        color = mix(color * 0.85, color, vignette);
         
         gl_FragColor = vec4(color, 1.0);
       }
@@ -199,35 +194,33 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
     constructor(canvas: HTMLCanvasElement) {
       this.canvas = canvas;
       
-      // Parse colors from data attributes
-      const primaryAttr = canvas.dataset.primary || '255,160,0';
-      const secondaryAttr = canvas.dataset.secondary || '80,90,110';
+      const bgAttr = canvas.dataset.bg || '140,145,155';
+      const accent1Attr = canvas.dataset.accent1 || '235,132,63';
+      const accent2Attr = canvas.dataset.accent2 || '180,175,170';
       const pm25 = parseFloat(canvas.dataset.pm25 || '50');
       
-      this.primaryColor = primaryAttr.split(',').map(Number);
-      this.secondaryColor = secondaryAttr.split(',').map(Number);
+      this.bgColor = bgAttr.split(',').map(Number);
+      this.accent1 = accent1Attr.split(',').map(Number);
+      this.accent2 = accent2Attr.split(',').map(Number);
       
-      // Speed based on PM2.5 (higher = faster/more chaotic)
-      this.speed = pm25 <= 12 ? 0.3 : pm25 <= 35 ? 0.6 : pm25 <= 55 ? 1.0 : pm25 <= 150 ? 1.5 : 2.0;
+      this.speed = pm25 <= 12 ? 0.2 : pm25 <= 35 ? 0.4 : pm25 <= 55 ? 0.6 : pm25 <= 150 ? 0.8 : 1.0;
       
       this.init();
+      this.initParticles();
     }
 
     private init() {
-      // Get WebGL context
       this.gl = this.canvas.getContext('webgl', {
         alpha: false,
-        antialias: false,
-        powerPreference: 'low-power' // Save battery on mobile
+        antialias: true,
+        powerPreference: 'low-power'
       });
 
       if (!this.gl) {
-        console.warn('WebGL not supported, falling back to CSS');
         this.fallback();
         return;
       }
 
-      // Create shaders
       const vertexShader = this.createShader(this.gl.VERTEX_SHADER, this.vertexShaderSource);
       const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, this.fragmentShaderSource);
 
@@ -236,24 +229,20 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
         return;
       }
 
-      // Create program
       this.program = this.createProgram(vertexShader, fragmentShader);
       if (!this.program) {
         this.fallback();
         return;
       }
 
-      // Get uniform locations
       this.uniforms.uTime = this.gl.getUniformLocation(this.program, 'uTime');
       this.uniforms.uResolution = this.gl.getUniformLocation(this.program, 'uResolution');
-      this.uniforms.uPrimaryColor = this.gl.getUniformLocation(this.program, 'uPrimaryColor');
-      this.uniforms.uSecondaryColor = this.gl.getUniformLocation(this.program, 'uSecondaryColor');
+      this.uniforms.uBgColor = this.gl.getUniformLocation(this.program, 'uBgColor');
+      this.uniforms.uAccent1 = this.gl.getUniformLocation(this.program, 'uAccent1');
+      this.uniforms.uAccent2 = this.gl.getUniformLocation(this.program, 'uAccent2');
       this.uniforms.uSpeed = this.gl.getUniformLocation(this.program, 'uSpeed');
 
-      // Setup geometry (fullscreen quad)
       this.setupGeometry();
-
-      // Start rendering
       this.resize();
       this.animate();
       
@@ -262,118 +251,97 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
 
     private createShader(type: number, source: string): WebGLShader | null {
       if (!this.gl) return null;
-      
       const shader = this.gl.createShader(type);
       if (!shader) return null;
-
       this.gl.shaderSource(shader, source);
       this.gl.compileShader(shader);
-
       if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-        console.error('Shader compile error:', this.gl.getShaderInfoLog(shader));
+        console.error('Shader error:', this.gl.getShaderInfoLog(shader));
         this.gl.deleteShader(shader);
         return null;
       }
-
       return shader;
     }
 
-    private createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram | null {
+    private createProgram(vs: WebGLShader, fs: WebGLShader): WebGLProgram | null {
       if (!this.gl) return null;
-      
       const program = this.gl.createProgram();
       if (!program) return null;
-
-      this.gl.attachShader(program, vertexShader);
-      this.gl.attachShader(program, fragmentShader);
+      this.gl.attachShader(program, vs);
+      this.gl.attachShader(program, fs);
       this.gl.linkProgram(program);
-
       if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
-        console.error('Program link error:', this.gl.getProgramInfoLog(program));
         this.gl.deleteProgram(program);
         return null;
       }
-
       return program;
     }
 
     private setupGeometry() {
       if (!this.gl || !this.program) return;
-
-      // Fullscreen quad (triangle strip)
-      const positions = new Float32Array([
-        -1, -1,
-         1, -1,
-        -1,  1,
-         1,  1
-      ]);
-
+      const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
       const buffer = this.gl.createBuffer();
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
       this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
-
       const aPosition = this.gl.getAttribLocation(this.program, 'aPosition');
       this.gl.enableVertexAttribArray(aPosition);
       this.gl.vertexAttribPointer(aPosition, 2, this.gl.FLOAT, false, 0, 0);
     }
 
     private resize() {
-      // Use lower resolution on mobile for performance
-      const dpr = Math.min(window.devicePixelRatio, 1.5);
-      const displayWidth = Math.floor(window.innerWidth * dpr);
-      const displayHeight = Math.floor(window.innerHeight * dpr);
-      
-      this.canvas.width = displayWidth;
-      this.canvas.height = displayHeight;
-      
-      if (this.gl) {
-        this.gl.viewport(0, 0, displayWidth, displayHeight);
-      }
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      this.canvas.width = Math.floor(window.innerWidth * dpr);
+      this.canvas.height = Math.floor(window.innerHeight * dpr);
+      if (this.gl) this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     }
 
     private animate() {
       if (!this.gl || !this.program) return;
-
       const elapsed = (Date.now() - this.startTime) / 1000;
-
       this.gl.useProgram(this.program);
-
-      // Update uniforms
       this.gl.uniform1f(this.uniforms.uTime, elapsed);
       this.gl.uniform2f(this.uniforms.uResolution, this.canvas.width, this.canvas.height);
-      this.gl.uniform3fv(this.uniforms.uPrimaryColor, this.primaryColor);
-      this.gl.uniform3fv(this.uniforms.uSecondaryColor, this.secondaryColor);
+      this.gl.uniform3fv(this.uniforms.uBgColor, this.bgColor);
+      this.gl.uniform3fv(this.uniforms.uAccent1, this.accent1);
+      this.gl.uniform3fv(this.uniforms.uAccent2, this.accent2);
       this.gl.uniform1f(this.uniforms.uSpeed, this.speed);
-
-      // Draw
       this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-
       this.animationId = requestAnimationFrame(() => this.animate());
     }
 
+    private initParticles() {
+      const container = document.getElementById('particles');
+      if (!container) return;
+      
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.top = `${Math.random() * 100}%`;
+        p.style.opacity = `${Math.random() * 0.5 + 0.2}`;
+        p.style.animationDuration = `${Math.random() * 20 + 15}s`;
+        p.style.animationDelay = `${Math.random() * 15}s`;
+        container.appendChild(p);
+      }
+    }
+
     private fallback() {
-      // CSS gradient fallback
       this.canvas.style.background = `
-        radial-gradient(ellipse at 30% 20%, 
-          rgba(${this.primaryColor.join(',')}, 0.4) 0%, 
-          transparent 50%),
-        radial-gradient(ellipse at 70% 80%, 
-          rgba(${this.secondaryColor.join(',')}, 0.3) 0%, 
-          transparent 50%),
-        linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
+        radial-gradient(ellipse at 30% 70%, rgba(235,132,63,0.4) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 30%, rgba(180,175,170,0.3) 0%, transparent 50%),
+        linear-gradient(135deg, #8c919b 0%, #a0a5af 100%)
       `;
     }
 
     destroy() {
       cancelAnimationFrame(this.animationId);
-      if (this.gl) {
-        this.gl.deleteProgram(this.program);
-        this.gl = null;
-      }
     }
   }
 
-  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
@@ -382,8 +350,6 @@ const secondaryColor = getSecondaryColors(r, g, b, pm25);
 
   function init() {
     const canvas = document.getElementById('liquid-canvas') as HTMLCanvasElement;
-    if (canvas) {
-      new LiquidBackground(canvas);
-    }
+    if (canvas) new LiquidBackground(canvas);
   }
 </script>

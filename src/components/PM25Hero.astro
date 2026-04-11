@@ -7,15 +7,22 @@ const { pm25 } = Astro.props;
 ---
 
 <div class="pm25-hero">
-  <!-- 3D Glass Text -->
-  <div class="glass-text-container">
-    <div class="glass-text" data-value={pm25}>
-      <span class="digit">{pm25}</span>
-    </div>
-    <!-- Reflection layer -->
-    <div class="glass-text reflection" aria-hidden="true">
-      <span class="digit">{pm25}</span>
-    </div>
+  <!-- 3D Extruded Number -->
+  <div class="number-3d">
+    <span class="digit-front">{pm25}</span>
+    <!-- Extruded depth layers -->
+    <span class="digit-extrude e1" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e2" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e3" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e4" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e5" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e6" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e7" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e8" aria-hidden="true">{pm25}</span>
+    <!-- Side faces for 3D thickness -->
+    <span class="digit-side side-left" aria-hidden="true">{pm25}</span>
+    <span class="digit-side side-right" aria-hidden="true">{pm25}</span>
+    <span class="digit-side side-bottom" aria-hidden="true">{pm25}</span>
   </div>
   
   <!-- Labels -->
@@ -32,150 +39,124 @@ const { pm25 } = Astro.props;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 28vh;
-    z-index: 10;
     padding: 1rem 0;
+    z-index: 10;
   }
 
-  .glass-text-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .glass-text {
+  .number-3d {
     position: relative;
     font-family: var(--font-display);
-    font-size: clamp(5rem, 18vw, 12rem);
-    font-weight: 800;
-    line-height: 0.85;
-    letter-spacing: -0.03em;
-    
-    /* 3D Glass Effect - Multiple layered shadows */
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow:
-      /* Inner depth */
-      0 0 0 rgba(255, 255, 255, 0.8),
-      /* 3D extrusion layers */
-      1px 1px 0 rgba(200, 200, 210, 0.4),
-      2px 2px 0 rgba(180, 180, 190, 0.35),
-      3px 3px 0 rgba(160, 160, 170, 0.3),
-      4px 4px 0 rgba(140, 140, 150, 0.25),
-      5px 5px 0 rgba(120, 120, 130, 0.2),
-      6px 6px 0 rgba(100, 100, 110, 0.15),
-      /* Soft glow */
-      0 0 40px rgba(255, 255, 255, 0.3),
-      0 0 80px rgba(255, 255, 255, 0.2),
-      /* Colored glow from theme */
-      0 0 60px rgba(var(--theme-color), 0.4),
-      0 0 120px rgba(var(--theme-color), 0.2),
-      /* Deep shadow */
-      8px 12px 30px rgba(0, 0, 0, 0.4);
-    
-    /* Glass texture */
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.4) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    
-    /* Smooth rendering */
-    will-change: transform;
-    transform: translateZ(0);
+    font-size: clamp(5rem, 16vw, 10rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    transform-style: preserve-3d;
+    perspective: 1000px;
   }
 
-  /* Reflection effect */
-  .glass-text.reflection {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    transform: scaleY(-0.3) translateY(-20%);
-    opacity: 0.15;
-    filter: blur(2px);
-    pointer-events: none;
-    text-shadow:
-      1px -1px 0 rgba(200, 200, 210, 0.3),
-      2px -2px 0 rgba(180, 180, 190, 0.25),
-      3px -3px 0 rgba(160, 160, 170, 0.2),
-      0 0 20px rgba(255, 255, 255, 0.2);
-    background: none;
-    -webkit-background-clip: unset;
-    background-clip: unset;
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .digit {
+  /* Front face - white glass */
+  .digit-front {
+    position: relative;
     display: inline-block;
-    /* Subtle float animation */
-    animation: float 6s ease-in-out infinite;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow:
+      /* Soft glow */
+      0 0 40px rgba(255, 255, 255, 0.4),
+      0 0 80px rgba(255, 255, 255, 0.2),
+      /* Top highlight */
+      0 -2px 0 rgba(255, 255, 255, 0.8),
+      /* Edge definition */
+      0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 10;
   }
 
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0) rotateX(0deg);
-    }
-    50% {
-      transform: translateY(-8px) rotateX(2deg);
-    }
+  /* Extrusion layers for depth - more layers for smoother gradient */
+  .digit-extrude {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: transparent;
+    z-index: 1;
   }
 
+  .e1 { transform: translate(0.5px, 0.5px); color: rgba(220, 220, 230, 0.5); z-index: 9; }
+  .e2 { transform: translate(1px, 1px); color: rgba(200, 200, 210, 0.45); z-index: 8; }
+  .e3 { transform: translate(1.5px, 1.5px); color: rgba(185, 185, 195, 0.4); z-index: 7; }
+  .e4 { transform: translate(2px, 2px); color: rgba(170, 170, 180, 0.35); z-index: 6; }
+  .e5 { transform: translate(2.5px, 2.5px); color: rgba(155, 155, 165, 0.3); z-index: 5; }
+  .e6 { transform: translate(3px, 3px); color: rgba(140, 140, 150, 0.25); z-index: 4; }
+  .e7 { transform: translate(3.5px, 3.5px); color: rgba(125, 125, 135, 0.2); z-index: 3; }
+  .e8 { transform: translate(4px, 4px); color: rgba(110, 110, 120, 0.15); z-index: 2; }
+
+  /* Side faces for 3D thickness illusion */
+  .digit-side {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+
+  .side-left {
+    transform: translate(-1px, 2px) skewY(-3deg);
+    color: rgba(180, 180, 190, 0.35);
+  }
+
+  .side-right {
+    transform: translate(5px, 2px) skewY(3deg);
+    color: rgba(160, 160, 170, 0.3);
+  }
+
+  .side-bottom {
+    transform: translate(2px, 4px) scaleY(0.3);
+    color: rgba(140, 140, 150, 0.25);
+    transform-origin: bottom;
+  }
+
+  /* Labels */
   .labels {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
-    margin-top: 0.5rem;
+    gap: 0.125rem;
+    margin-top: 0.75rem;
   }
 
   .pm25-label {
     font-family: var(--font-display);
-    font-size: clamp(1.25rem, 4vw, 2rem);
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.7);
-    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.15em;
     text-transform: uppercase;
   }
 
   .pm25-unit {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 0.05em;
+    font-family: var(--font-display);
+    font-size: clamp(0.875rem, 2vw, 1.125rem);
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.1em;
   }
 
   /* Responsive */
   @media (min-width: 768px) {
     .pm25-hero {
-      min-height: 40vh;
-      padding: 3rem 0;
+      padding: 1.5rem 0;
     }
 
-    .pm25-label {
-      font-size: clamp(1.5rem, 3vw, 2.5rem);
+    .number-3d {
+      font-size: clamp(6rem, 14vw, 12rem);
     }
 
-    .pm25-unit {
-      font-size: 1rem;
+    .labels {
+      margin-top: 1rem;
     }
   }
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .digit {
-      animation: none;
-    }
-    
-    .glass-text {
-      text-shadow:
-        0 0 40px rgba(255, 255, 255, 0.3),
-        0 0 60px rgba(var(--theme-color), 0.4),
-        4px 6px 20px rgba(0, 0, 0, 0.4);
+    .digit-front {
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
   }
 </style>

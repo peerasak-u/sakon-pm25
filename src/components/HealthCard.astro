@@ -1,48 +1,19 @@
 ---
 interface Props {
+  usTitle: string;
+  usTitleEn: string;
   usCaption: string;
   usCaptionEn: string;
 }
 
-const { usCaption, usCaptionEn } = Astro.props;
-
-// Parse AQI level from caption to determine severity
-function getAQILevel(caption: string): 'low' | 'moderate' | 'high' | 'severe' {
-  const lower = caption.toLowerCase();
-  if (lower.includes('ดี') || lower.includes('good')) return 'low';
-  if (lower.includes('ปานกลาง') || lower.includes('moderate')) return 'moderate';
-  if (lower.includes('เฝ้าระวัง') || lower.includes('sensitive')) return 'moderate';
-  if (lower.includes('ไม่ดี') || lower.includes('unhealthy')) return 'high';
-  if (lower.includes('อันตราย') || lower.includes('hazardous')) return 'severe';
-  return 'moderate';
-}
-
-const level = getAQILevel(usCaption);
-
-const levelConfig = {
-  low: { glowIntensity: 0.3, borderOpacity: 0.2 },
-  moderate: { glowIntensity: 0.4, borderOpacity: 0.3 },
-  high: { glowIntensity: 0.5, borderOpacity: 0.4 },
-  severe: { glowIntensity: 0.6, borderOpacity: 0.5 }
-};
-
-const config = levelConfig[level];
-
-// Truncate captions for cleaner display
-function truncateCaption(caption: string, maxLength: number = 200): string {
-  if (caption.length <= maxLength) return caption;
-  return caption.substring(0, maxLength).trim() + '...';
-}
-
-const shortCaptionTh = truncateCaption(usCaption, 180);
-const shortCaptionEn = truncateCaption(usCaptionEn, 160);
+const { usTitle, usTitleEn, usCaption, usCaptionEn } = Astro.props;
 ---
 
-<div class="glass-card" style={`--glow-intensity: ${config.glowIntensity}; --border-opacity: ${config.borderOpacity}`}>
+<div class="glass-card">
   <div class="glass-border"></div>
   <div class="glass-content">
-    <p class="caption-th">{shortCaptionTh}</p>
-    <p class="caption-en">{shortCaptionEn}</p>
+    <h2 class="card-title">{usTitleEn}</h2>
+    <p class="card-description">{usCaptionEn}</p>
   </div>
   <div class="glass-shine" aria-hidden="true"></div>
 </div>
@@ -51,42 +22,36 @@ const shortCaptionEn = truncateCaption(usCaptionEn, 160);
   .glass-card {
     position: relative;
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     margin: 0 auto;
-    padding: 1.5rem;
-    border-radius: 24px;
+    padding: 1.75rem 2rem;
+    border-radius: 16px;
     overflow: hidden;
     
-    /* Frosted glass background */
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* Frosted glass */
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     
-    /* Glass border */
-    border: 1px solid rgba(255, 255, 255, var(--border-opacity, 0.3));
-    
-    /* Subtle glow based on AQI */
+    /* Soft shadow */
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-      0 8px 32px rgba(0, 0, 0, 0.3),
-      0 0 60px rgba(var(--theme-color), calc(var(--glow-intensity, 0.4) * 0.3));
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     
-    /* Smooth transitions */
     transition: all 0.3s ease;
   }
 
   .glass-border {
     position: absolute;
     inset: 0;
-    border-radius: 24px;
+    border-radius: 16px;
     pointer-events: none;
-    
-    /* Gradient border effect */
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(255, 255, 255, 0.1) 100%
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.15) 100%
     );
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -101,88 +66,74 @@ const shortCaptionEn = truncateCaption(usCaptionEn, 160);
     text-align: center;
   }
 
-  .caption-th {
-    font-family: var(--font-thai);
-    font-size: 1.125rem;
-    font-weight: 400;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.9);
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
     margin: 0 0 0.75rem 0;
+    letter-spacing: -0.01em;
   }
 
-  .caption-en {
+  .card-description {
     font-family: var(--font-body);
     font-size: 0.9375rem;
     font-weight: 400;
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.75);
     margin: 0;
   }
 
-  /* Glass shine reflection */
+  /* Top highlight */
   .glass-shine {
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
-    height: 40%;
+    left: 10%;
+    right: 10%;
+    height: 1px;
     background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.15) 0%,
-      rgba(255, 255, 255, 0.05) 40%,
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
       transparent 100%
     );
-    border-radius: 24px 24px 0 0;
     pointer-events: none;
-    z-index: 1;
   }
 
   /* Hover effect */
   .glass-card:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.2);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-      0 12px 40px rgba(0, 0, 0, 0.4),
-      0 0 80px rgba(var(--theme-color), calc(var(--glow-intensity, 0.4) * 0.4));
-    transform: translateY(-2px);
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.15) inset;
   }
 
   /* Responsive */
   @media (min-width: 768px) {
     .glass-card {
-      padding: 2rem;
-      border-radius: 28px;
+      padding: 2rem 2.5rem;
+      border-radius: 20px;
     }
 
     .glass-border {
-      border-radius: 28px;
+      border-radius: 20px;
     }
 
-    .glass-shine {
-      border-radius: 28px 28px 0 0;
+    .card-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
     }
 
-    .caption-th {
-      font-size: 1.25rem;
-    }
-
-    .caption-en {
+    .card-description {
       font-size: 1rem;
+      line-height: 1.7;
     }
   }
 
-  /* Safari fix for backdrop-filter */
-  @supports not (backdrop-filter: blur(20px)) {
+  /* Safari fix */
+  @supports not (backdrop-filter: blur(16px)) {
     .glass-card {
-      background: rgba(40, 40, 50, 0.85);
-    }
-  }
-
-  /* Reduced transparency for accessibility */
-  @media (prefers-reduced-transparency: reduce) {
-    .glass-card {
-      background: rgba(30, 30, 35, 0.95);
-      backdrop-filter: none;
+      background: rgba(100, 100, 110, 0.85);
     }
   }
 </style>

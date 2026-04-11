@@ -3,7 +3,6 @@ import Layout from '../layouts/Layout.astro';
 import LiquidBackground from '../components/LiquidBackground.astro';
 import LocationHeader from '../components/LocationHeader.astro';
 import PM25Hero from '../components/PM25Hero.astro';
-import AQIStatus from '../components/AQIStatus.astro';
 import HealthCard from '../components/HealthCard.astro';
 import LastUpdated from '../components/LastUpdated.astro';
 
@@ -14,22 +13,20 @@ import data from '../data/pm25-history.json';
 const latest = data.readings[data.readings.length - 1];
 const station = data.station;
 
-// Fallback data for display before real data arrives
+// Fallback data
 const fallbackData = {
   pm25: 25,
   us_aqi: 82,
   us_title: 'คุณภาพอากาศปานกลาง',
   us_title_en: 'Moderate',
-  us_caption: 'ประชาชนทั่วไปควรเฝ้าระวังสุขภาพ หากมีอาการผิดปกติควรพบแพทย์',
+  us_caption: 'ประชาชนทั่วไปควรเฝ้าระวังสุขภาพ',
   us_caption_en: 'Air quality is acceptable. However, there may be a risk for some people.',
   us_color: '255,255,0',
   datetime: new Date().toISOString().replace('T', ' ').slice(0, 19)
 };
 
-// Use actual data or fallback - ALWAYS show something
 const reading = latest || fallbackData;
 
-// Determine AQI level for dynamic assets
 function getAQILevel(usAqi: number): 'good' | 'moderate' | 'sensitive' | 'unhealthy' | 'very-unhealthy' | 'hazardous' {
   if (usAqi <= 50) return 'good';
   if (usAqi <= 100) return 'moderate';
@@ -41,46 +38,26 @@ function getAQILevel(usAqi: number): 'good' | 'moderate' | 'sensitive' | 'unheal
 
 const aqiLevel = getAQILevel(reading.us_aqi);
 
-// Map AQI level to assets
 const assetMap: Record<string, { favicon: string; ogImage: string }> = {
-  'good': {
-    favicon: '/favicon/favicon-good.svg',
-    ogImage: '/og/og-aqi-good.svg'
-  },
-  'moderate': {
-    favicon: '/favicon/favicon-moderate.svg',
-    ogImage: '/og/og-aqi-moderate.svg'
-  },
-  'sensitive': {
-    favicon: '/favicon/favicon-sensitive.svg',
-    ogImage: '/og/og-aqi-sensitive.svg'
-  },
-  'unhealthy': {
-    favicon: '/favicon/favicon-unhealthy.svg',
-    ogImage: '/og/og-aqi-unhealthy.svg'
-  },
-  'very-unhealthy': {
-    favicon: '/favicon/favicon-very-unhealthy.svg',
-    ogImage: '/og/og-aqi-very-unhealthy.svg'
-  },
-  'hazardous': {
-    favicon: '/favicon/favicon-hazardous.svg',
-    ogImage: '/og/og-aqi-hazardous.svg'
-  }
+  'good': { favicon: '/favicon/favicon-good.svg', ogImage: '/og/og-aqi-good.svg' },
+  'moderate': { favicon: '/favicon/favicon-moderate.svg', ogImage: '/og/og-aqi-moderate.svg' },
+  'sensitive': { favicon: '/favicon/favicon-sensitive.svg', ogImage: '/og/og-aqi-sensitive.svg' },
+  'unhealthy': { favicon: '/favicon/favicon-unhealthy.svg', ogImage: '/og/og-aqi-unhealthy.svg' },
+  'very-unhealthy': { favicon: '/favicon/favicon-very-unhealthy.svg', ogImage: '/og/og-aqi-very-unhealthy.svg' },
+  'hazardous': { favicon: '/favicon/favicon-hazardous.svg', ogImage: '/og/og-aqi-hazardous.svg' }
 };
 
 const assets = assetMap[aqiLevel];
 
-// Page metadata
-const pageTitle = `${reading.us_title_en} — PM2.5 สกลนคร | Sakon Air Quality`;
-const pageDescription = `คุณภาพอากาศ ${station?.name_th || 'สวนสมเด็จพระศรีนครินทร์'} — PM2.5 อยู่ที่ ${reading.pm25} μg/m³ (${reading.us_title_en})`;
+const pageTitle = `${reading.us_title_en} — PM2.5 Sakon Nakhon`;
+const pageDescription = `${station?.name_en || 'Sraphangthong pond'} — PM2.5 is ${reading.pm25} μg/m³`;
 
-// Theme color from reading
-const themeColor = reading.us_color;
-
-// Station name
-const stationNameTh = station?.name_th || 'สวนสมเด็จพระศรีนครินทร์ สกลนคร';
-const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
+// Clean station name
+const stationNameEn = station?.name_en || 'Sraphangthong pond, Somdej Phra Srinakarin Park, Sakon Nakhon Province';
+// Extract just "Sraphangthong pond, Sakon Nakhon" for display
+const displayLocation = stationNameEn
+  .replace('Somdej Phra Srinakarin Park, ', '')
+  .replace(' Province', '');
 ---
 
 <Layout 
@@ -90,21 +67,17 @@ const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
   favicon={assets.favicon}
   aqiLevel={aqiLevel}
 >
-  <!-- Theme wrapper with dynamic color -->
-  <div class="glassmorphism-theme" style={`--theme-color: ${themeColor}`}>
+  <div class="light-theme">
     <!-- Animated liquid gradient background -->
-    <LiquidBackground pm25={reading.pm25} usColor={themeColor} />
+    <LiquidBackground pm25={reading.pm25} usColor={reading.us_color} />
     
     <main class="dashboard">
       <div class="container">
         
         <!-- Header -->
-        <header class="section header-section">
+        <header class="section">
           <LocationHeader 
-            nameTh={stationNameTh}
-            nameEn={stationNameEn}
-            provinceTh="สกลนคร"
-            provinceEn="Sakon Nakhon"
+            nameEn={displayLocation}
           />
         </header>
         
@@ -113,17 +86,11 @@ const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
           <PM25Hero pm25={reading.pm25} />
         </section>
         
-        <!-- AQI Status Badge -->
-        <section class="section status-section" aria-label="Air Quality Status">
-          <AQIStatus 
+        <!-- Health Info Card -->
+        <section class="section card-section" aria-label="Health Recommendation">
+          <HealthCard 
             usTitle={reading.us_title}
             usTitleEn={reading.us_title_en}
-          />
-        </section>
-        
-        <!-- Health Recommendation -->
-        <section class="section health-section" aria-label="Health Recommendation">
-          <HealthCard 
             usCaption={reading.us_caption}
             usCaptionEn={reading.us_caption_en}
           />
@@ -140,14 +107,14 @@ const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
 </Layout>
 
 <style>
-  .glassmorphism-theme {
+  .light-theme {
     min-height: 100dvh;
-    /* Dark base for glassmorphism */
+    /* Light gray base */
     background: linear-gradient(
       180deg,
-      #0d0d12 0%,
-      #151520 50%,
-      #1a1a25 100%
+      #9ca0a8 0%,
+      #a8acb4 50%,
+      #b4b8c0 100%
     );
     position: relative;
   }
@@ -156,20 +123,20 @@ const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
     position: relative;
     z-index: 2;
     min-height: 100dvh;
-    padding: 1.5rem 1rem 1rem;
+    padding: 2rem 1.5rem 1.5rem;
     display: flex;
     flex-direction: column;
   }
 
   .container {
-    max-width: 600px;
+    max-width: 560px;
     margin: 0 auto;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 1.5rem;
+    gap: 2rem;
     flex: 1;
   }
 
@@ -180,47 +147,28 @@ const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
     align-items: center;
   }
 
-  .header-section {
-    margin-top: 0.5rem;
-  }
-
   .hero-section {
-    margin: 0.5rem 0;
-  }
-
-  .status-section {
-    margin: 0.5rem 0;
-  }
-
-  .health-section {
     margin: 1rem 0;
   }
 
-  .footer-section {
+  .card-section {
     margin-top: auto;
+    padding-top: 2rem;
+  }
+
+  .footer-section {
     padding-top: 2rem;
     padding-bottom: 0.5rem;
   }
 
   @media (min-width: 768px) {
     .dashboard {
-      padding: 2rem 1.5rem 1.5rem;
+      padding: 2.5rem 2rem 2rem;
     }
 
-    .container {
-      gap: 2rem;
-      max-width: 550px;
-    }
-
-    .hero-section {
-      margin: 1rem 0;
-    }
-  }
-
-  @media (min-width: 1024px) {
     .container {
       gap: 2.5rem;
-      max-width: 500px;
+      max-width: 600px;
     }
   }
 </style>
