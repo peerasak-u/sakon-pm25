@@ -1,0 +1,376 @@
+---
+interface Props {
+  pm25: number;
+  usColor: string;
+}
+
+const { pm25, usColor } = Astro.props;
+
+// Parse RGB values
+const [r, g, b] = usColor.split(',').map(Number);
+
+// Generate palette for vibrant orange theme
+function getLightPalette(r: number, g: number, b: number): { bg: string; accent1: string; accent2: string } {
+  // For orange/yellow tones - make them more vibrant
+  if (r > 200 && g > 100 && b < 100) {
+    return {
+      bg: '160, 165, 175',        // Light cool gray base
+      accent1: '235, 120, 50',    // Vibrant orange
+      accent2: '200, 140, 100'    // Soft peach
+    };
+  }
+  // For other colors, adapt with more saturation
+  return {
+    bg: '160, 165, 175',
+    accent1: `${Math.min(r + 20, 255)}, ${Math.max(g - 20, 0)}, ${b}`,
+    accent2: '180, 160, 140'
+  };
+}
+
+const palette = getLightPalette(r, g, b);
+---
+
+<canvas 
+  id="liquid-canvas" 
+  class="liquid-background"
+  data-bg={palette.bg}
+  data-accent1={palette.accent1}
+  data-accent2={palette.accent2}
+  data-pm25={pm25}
+  aria-hidden="true"
+></canvas>
+
+<!-- Floating particles overlay -->
+<div class="particles" id="particles" aria-hidden="true"></div>
+
+<style>
+  .liquid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float-up linear infinite;
+  }
+
+  @keyframes float-up {
+    0% {
+      transform: translateY(100vh) scale(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateY(-10vh) scale(1);
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  interface Uniforms {
+    uTime: WebGLUniformLocation | null;
+    uResolution: WebGLUniformLocation | null;
+    uBgColor: WebGLUniformLocation | null;
+    uAccent1: WebGLUniformLocation | null;
+    uAccent2: WebGLUniformLocation | null;
+    uSpeed: WebGLUniformLocation | null;
+  }
+
+  class LiquidBackground {
+    private canvas: HTMLCanvasElement;
+    private gl: WebGLRenderingContext | null = null;
+    private program: WebGLProgram | null = null;
+    private uniforms: Uniforms = {
+      uTime: null,
+      uResolution: null,
+      uBgColor: null,
+      uAccent1: null,
+      uAccent2: null,
+      uSpeed: null
+    };
+    private animationId: number = 0;
+    private startTime: number = Date.now();
+    private bgColor: number[];
+    private accent1: number[];
+    private accent2: number[];
+    private speed: number;
+
+    // Vertex shader
+    private vertexShaderSource = `
+      attribute vec2 aPosition;
+      void main() {
+        gl_Position = vec4(aPosition, 0.0, 1.0);
+      }
+    `;
+
+    // Fragment shader - light theme with multiple animated shapes
+    private fragmentShaderSource = `
+      precision mediump float;
+      
+      uniform float uTime;
+      uniform vec2 uResolution;
+      uniform vec3 uBgColor;
+      uniform vec3 uAccent1;
+      uniform vec3 uAccent2;
+      uniform float uSpeed;
+      
+      // Simple noise
+      float rand(vec2 n) { 
+        return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+      }
+      
+      float noise(vec2 p) {
+        vec2 ip = floor(p);
+        vec2 u = fract(p);
+        u = u * u * (3.0 - 2.0 * u);
+        
+        float res = mix(
+          mix(rand(ip), rand(ip + vec2(1.0, 0.0)), u.x),
+          mix(rand(ip + vec2(0.0, 1.0)), rand(ip + vec2(1.0, 1.0)), u.x),
+          u.y
+        );
+        return res;
+      }
+      
+      void main() {
+        vec2 uv = gl_FragCoord.xy / uResolution;
+        float time = uTime * uSpeed * 0.12;
+        
+        // Base gray background
+        vec3 baseColor = uBgColor / 255.0;
+        vec3 color = baseColor;
+        
+        // Multiple animated blobs with different sizes and speeds
+        // Large orange blob (top-right)
+        float n1 = noise(uv * 0.7 + time * 0.4 + vec2(50.0, 100.0));
+        float blob1 = smoothstep(0.4, 0.7, n1);
+        color = mix(color, uAccent1 / 255.0, blob1 * 0.8);
+        
+        // Large peach blob (bottom-left)
+        float n2 = noise(uv * 0.6 - time * 0.35 + vec2(200.0, -50.0));
+        float blob2 = smoothstep(0.35, 0.65, n2);
+        color = mix(color, uAccent2 / 255.0, blob2 * 0.6);
+        
+        // Medium orange blob (center-left, faster)
+        float n3 = noise(uv * 1.2 + time * 0.6 + vec2(-100.0, 150.0));
+        float blob3 = smoothstep(0.3, 0.6, n3);
+        color = mix(color, (uAccent1 * 1.2) / 255.0, blob3 * 0.5);
+        
+        // Small fast blob (top)
+        float n4 = noise(uv * 2.0 + time * 0.8 + vec2(0.0, -100.0));
+        float blob4 = smoothstep(0.25, 0.55, n4);
+        color = mix(color, uAccent2 / 255.0, blob4 * 0.4);
+        
+        // Drifting gray warm blob (right side)
+        float n5 = noise(uv * 0.9 - time * 0.3 + vec2(300.0, 50.0));
+        float blob5 = smoothstep(0.4, 0.7, n5);
+        color = mix(color, vec3(0.75, 0.72, 0.70), blob5 * 0.35);
+        
+        // Small accent blob (bottom-right)
+        float n6 = noise(uv * 1.5 + time * 0.5 + vec2(250.0, 200.0));
+        float blob6 = smoothstep(0.3, 0.6, n6);
+        color = mix(color, uAccent1 / 255.0, blob6 * 0.45);
+        
+        // Flowing orange streak (horizontal)
+        float streak = smoothstep(0.3, 0.5, noise(vec2(uv.x * 3.0 + time * 0.7, uv.y * 0.5)));
+        color = mix(color, uAccent1 / 255.0, streak * 0.25);
+        
+        // Add subtle noise texture
+        float grain = noise(uv * 800.0) * 0.012;
+        color += grain;
+        
+        // Soft vignette for depth
+        float vignette = 1.0 - smoothstep(0.3, 1.5, length((uv - 0.5) * 1.3));
+        color = mix(color * 0.88, color, vignette);
+        
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+    constructor(canvas: HTMLCanvasElement) {
+      this.canvas = canvas;
+      
+      const bgAttr = canvas.dataset.bg || '140,145,155';
+      const accent1Attr = canvas.dataset.accent1 || '235,132,63';
+      const accent2Attr = canvas.dataset.accent2 || '180,175,170';
+      const pm25 = parseFloat(canvas.dataset.pm25 || '50');
+      
+      this.bgColor = bgAttr.split(',').map(Number);
+      this.accent1 = accent1Attr.split(',').map(Number);
+      this.accent2 = accent2Attr.split(',').map(Number);
+      
+      this.speed = 2.5; // Much faster animation
+      
+      this.init();
+      this.initParticles();
+    }
+
+    private init() {
+      this.gl = this.canvas.getContext('webgl', {
+        alpha: false,
+        antialias: true,
+        powerPreference: 'low-power'
+      });
+
+      if (!this.gl) {
+        this.fallback();
+        return;
+      }
+
+      const vertexShader = this.createShader(this.gl.VERTEX_SHADER, this.vertexShaderSource);
+      const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, this.fragmentShaderSource);
+
+      if (!vertexShader || !fragmentShader) {
+        this.fallback();
+        return;
+      }
+
+      this.program = this.createProgram(vertexShader, fragmentShader);
+      if (!this.program) {
+        this.fallback();
+        return;
+      }
+
+      this.uniforms.uTime = this.gl.getUniformLocation(this.program, 'uTime');
+      this.uniforms.uResolution = this.gl.getUniformLocation(this.program, 'uResolution');
+      this.uniforms.uBgColor = this.gl.getUniformLocation(this.program, 'uBgColor');
+      this.uniforms.uAccent1 = this.gl.getUniformLocation(this.program, 'uAccent1');
+      this.uniforms.uAccent2 = this.gl.getUniformLocation(this.program, 'uAccent2');
+      this.uniforms.uSpeed = this.gl.getUniformLocation(this.program, 'uSpeed');
+
+      this.setupGeometry();
+      this.resize();
+      this.animate();
+      
+      window.addEventListener('resize', () => this.resize());
+    }
+
+    private createShader(type: number, source: string): WebGLShader | null {
+      if (!this.gl) return null;
+      const shader = this.gl.createShader(type);
+      if (!shader) return null;
+      this.gl.shaderSource(shader, source);
+      this.gl.compileShader(shader);
+      if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+        console.error('Shader error:', this.gl.getShaderInfoLog(shader));
+        this.gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    private createProgram(vs: WebGLShader, fs: WebGLShader): WebGLProgram | null {
+      if (!this.gl) return null;
+      const program = this.gl.createProgram();
+      if (!program) return null;
+      this.gl.attachShader(program, vs);
+      this.gl.attachShader(program, fs);
+      this.gl.linkProgram(program);
+      if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+        this.gl.deleteProgram(program);
+        return null;
+      }
+      return program;
+    }
+
+    private setupGeometry() {
+      if (!this.gl || !this.program) return;
+      const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+      const buffer = this.gl.createBuffer();
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+      const aPosition = this.gl.getAttribLocation(this.program, 'aPosition');
+      this.gl.enableVertexAttribArray(aPosition);
+      this.gl.vertexAttribPointer(aPosition, 2, this.gl.FLOAT, false, 0, 0);
+    }
+
+    private resize() {
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      this.canvas.width = Math.floor(window.innerWidth * dpr);
+      this.canvas.height = Math.floor(window.innerHeight * dpr);
+      if (this.gl) this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    private animate() {
+      if (!this.gl || !this.program) return;
+      const elapsed = (Date.now() - this.startTime) / 1000;
+      this.gl.useProgram(this.program);
+      this.gl.uniform1f(this.uniforms.uTime, elapsed);
+      this.gl.uniform2f(this.uniforms.uResolution, this.canvas.width, this.canvas.height);
+      this.gl.uniform3fv(this.uniforms.uBgColor, this.bgColor);
+      this.gl.uniform3fv(this.uniforms.uAccent1, this.accent1);
+      this.gl.uniform3fv(this.uniforms.uAccent2, this.accent2);
+      this.gl.uniform1f(this.uniforms.uSpeed, this.speed);
+      this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+      this.animationId = requestAnimationFrame(() => this.animate());
+    }
+
+    private initParticles() {
+      const container = document.getElementById('particles');
+      if (!container) return;
+      
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.top = `${Math.random() * 100}%`;
+        p.style.opacity = `${Math.random() * 0.5 + 0.2}`;
+        p.style.animationDuration = `${Math.random() * 20 + 15}s`;
+        p.style.animationDelay = `${Math.random() * 15}s`;
+        container.appendChild(p);
+      }
+    }
+
+    private fallback() {
+      this.canvas.style.background = `
+        radial-gradient(ellipse at 30% 70%, rgba(235,132,63,0.4) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 30%, rgba(180,175,170,0.3) 0%, transparent 50%),
+        linear-gradient(135deg, #8c919b 0%, #a0a5af 100%)
+      `;
+    }
+
+    destroy() {
+      cancelAnimationFrame(this.animationId);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  function init() {
+    const canvas = document.getElementById('liquid-canvas') as HTMLCanvasElement;
+    if (canvas) new LiquidBackground(canvas);
+  }
+</script>

@@ -1,105 +1,139 @@
 ---
 interface Props {
-  usCaption: string;     // Thai health advice
-  usCaptionEn: string;   // English health advice
+  usTitle: string;
+  usTitleEn: string;
+  usCaption: string;
+  usCaptionEn: string;
 }
 
-const { usCaption, usCaptionEn } = Astro.props;
+const { usTitle, usTitleEn, usCaption, usCaptionEn } = Astro.props;
 ---
 
-<div class="health-card">
-  <div class="health-icon">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-      <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
+<div class="glass-card">
+  <div class="glass-border"></div>
+  <div class="glass-content">
+    <h2 class="card-title">{usTitleEn}</h2>
+    <p class="card-description">{usCaptionEn}</p>
   </div>
-  
-  <div class="health-content">
-    <p class="health-thai">{usCaption}</p>
-    <p class="health-en">{usCaptionEn}</p>
-  </div>
+  <div class="glass-shine" aria-hidden="true"></div>
 </div>
 
 <style>
-  .health-card {
-    background: var(--color-bg-secondary);
-    border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 1.25rem;
-    max-width: 500px;
+  .glass-card {
+    position: relative;
     width: 100%;
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    backdrop-filter: blur(10px);
-    z-index: 10;
-    /* Dynamic subtle glow from theme */
-    box-shadow: 
-      0 4px 20px rgba(0, 0, 0, 0.3),
-      0 0 40px rgba(var(--theme-color), 0.08);
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 1.75rem 2rem;
+    border-radius: 16px;
+    overflow: hidden;
+    
+    /* Frosted glass */
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    
+    /* Soft shadow */
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    
+    transition: all 0.3s ease;
   }
 
-  .health-icon {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    color: rgb(var(--theme-color));
-    background: rgba(var(--theme-color), 0.15);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .glass-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.15) 100%
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    padding: 1px;
   }
 
-  .health-icon svg {
-    width: 22px;
-    height: 22px;
+  .glass-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
   }
 
-  .health-content {
-    flex: 1;
-    min-width: 0;
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0 0 0.75rem 0;
+    letter-spacing: -0.01em;
   }
 
-  .health-thai {
+  .card-description {
     font-family: var(--font-body);
     font-size: 0.9375rem;
-    line-height: 1.7;
-    color: var(--color-text-primary);
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.75);
     margin: 0;
   }
 
-  .health-en {
-    font-family: var(--font-body);
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-    margin: 0.625rem 0 0 0;
+  /* Top highlight */
+  .glass-shine {
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    pointer-events: none;
   }
 
+  /* Hover effect */
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  }
+
+  /* Responsive */
   @media (min-width: 768px) {
-    .health-card {
-      padding: 1.5rem;
-      max-width: 550px;
+    .glass-card {
+      padding: 2rem 2.5rem;
+      border-radius: 20px;
     }
 
-    .health-icon {
-      width: 48px;
-      height: 48px;
+    .glass-border {
+      border-radius: 20px;
     }
 
-    .health-icon svg {
-      width: 26px;
-      height: 26px;
+    .card-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
     }
 
-    .health-thai {
-      font-size: 1.0625rem;
+    .card-description {
+      font-size: 1rem;
+      line-height: 1.7;
     }
+  }
 
-    .health-en {
-      font-size: 0.9375rem;
+  /* Safari fix */
+  @supports not (backdrop-filter: blur(16px)) {
+    .glass-card {
+      background: rgba(100, 100, 110, 0.85);
     }
   }
 </style>

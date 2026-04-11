@@ -1,210 +1,101 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ParticleBackground from '../components/ParticleBackground.astro';
-import LocationHeader from '../components/LocationHeader.astro';
-import PM25Hero from '../components/PM25Hero.astro';
-import AQIStatus from '../components/AQIStatus.astro';
-import HealthCard from '../components/HealthCard.astro';
-import LastUpdated from '../components/LastUpdated.astro';
+import LiquidBackground from '../components/LiquidBackground.astro';
+import GlassCard from '../components/GlassCard.astro';
 
-// Load data from JSON file
+// Load data
 import data from '../data/pm25-history.json';
 
-// Get latest reading (if any)
 const latest = data.readings[data.readings.length - 1];
 const station = data.station;
 
-// Fallback data for display before real data arrives
-const fallbackData = {
-  pm25: 25,
-  us_aqi: 82,
-  us_title: 'คุณภาพอากาศปานกลาง',
-  us_title_en: 'Moderate',
-  us_caption: 'ประชาชนทั่วไปควรเฝ้าระวังสุขภาพ หากมีอาการผิดปกติควรพบแพทย์',
-  us_caption_en: 'Air quality is acceptable. However, there may be a risk for some people.',
-  us_color: '255,255,0',
-  datetime: new Date().toISOString().replace('T', ' ').slice(0, 19)
+const fallback = {
+  pm25: 54,
+  us_aqi: 147,
+  us_title: 'คุณภาพอากาศไม่ดีต่อกลุ่มเสี่ยง',
+  us_title_en: 'Unhealthy for Sensitive Groups',
+  us_caption: 'ประชาชนที่ไวต่อมลพิษมากกว่าคนทั่วไปควรลดการออกแรงหนัก',
+  us_caption_en: 'Members of sensitive groups may experience health effects. The general public is not likely to be affected.',
+  us_color: '235, 132, 63',
+  datetime: new Date().toISOString()
 };
 
-// Use actual data or fallback - ALWAYS show something
-const reading = latest || fallbackData;
+const r = latest || fallback;
 
-// Determine AQI level for dynamic assets
-function getAQILevel(usAqi: number): 'good' | 'moderate' | 'sensitive' | 'unhealthy' | 'very-unhealthy' | 'hazardous' {
-  if (usAqi <= 50) return 'good';
-  if (usAqi <= 100) return 'moderate';
-  if (usAqi <= 150) return 'sensitive';
-  if (usAqi <= 200) return 'unhealthy';
-  if (usAqi <= 300) return 'very-unhealthy';
-  return 'hazardous';
-}
+// Clean location
+const location = (station?.name_en || 'Sraphangthong pond, Somdej Phra Srinakarin Park, Sakon Nakhon Province')
+  .replace('Somdej Phra Srinakarin Park, ', '')
+  .replace(' Province', '');
 
-const aqiLevel = getAQILevel(reading.us_aqi);
+const aqiLevel = r.us_aqi <= 50 ? 'good' : 
+                 r.us_aqi <= 100 ? 'moderate' : 
+                 r.us_aqi <= 150 ? 'sensitive' : 
+                 r.us_aqi <= 200 ? 'unhealthy' : 
+                 r.us_aqi <= 300 ? 'very-unhealthy' : 'hazardous';
 
-// Map AQI level to assets
-const assetMap: Record<string, { favicon: string; ogImage: string }> = {
-  'good': {
-    favicon: '/favicon/favicon-good.svg',
-    ogImage: '/og/og-aqi-good.svg'
-  },
-  'moderate': {
-    favicon: '/favicon/favicon-moderate.svg',
-    ogImage: '/og/og-aqi-moderate.svg'
-  },
-  'sensitive': {
-    favicon: '/favicon/favicon-sensitive.svg',
-    ogImage: '/og/og-aqi-sensitive.svg'
-  },
-  'unhealthy': {
-    favicon: '/favicon/favicon-unhealthy.svg',
-    ogImage: '/og/og-aqi-unhealthy.svg'
-  },
-  'very-unhealthy': {
-    favicon: '/favicon/favicon-very-unhealthy.svg',
-    ogImage: '/og/og-aqi-very-unhealthy.svg'
-  },
-  'hazardous': {
-    favicon: '/favicon/favicon-hazardous.svg',
-    ogImage: '/og/og-aqi-hazardous.svg'
-  }
-};
-
-const assets = assetMap[aqiLevel];
-
-// Page metadata
-const pageTitle = `${reading.us_title_en} — PM2.5 สกลนคร | Sakon Air Quality`;
-const pageDescription = `คุณภาพอากาศ ${station?.name_th || 'สวนสมเด็จพระศรีนครินทร์'} — PM2.5 อยู่ที่ ${reading.pm25} μg/m³ (${reading.us_title_en})`;
-
-// Theme color from reading
-const themeColor = reading.us_color;
+const assets = {
+  good: { favicon: '/favicon/favicon-good.svg', ogImage: '/og/og-aqi-good.svg' },
+  moderate: { favicon: '/favicon/favicon-moderate.svg', ogImage: '/og/og-aqi-moderate.svg' },
+  sensitive: { favicon: '/favicon/favicon-sensitive.svg', ogImage: '/og/og-aqi-sensitive.svg' },
+  unhealthy: { favicon: '/favicon/favicon-unhealthy.svg', ogImage: '/og/og-aqi-unhealthy.svg' },
+  'very-unhealthy': { favicon: '/favicon/favicon-very-unhealthy.svg', ogImage: '/og/og-aqi-very-unhealthy.svg' },
+  hazardous: { favicon: '/favicon/favicon-hazardous.svg', ogImage: '/og/og-aqi-hazardous.svg' }
+}[aqiLevel];
 ---
 
 <Layout 
-  title={pageTitle}
-  description={pageDescription}
+  title={`${r.us_title_en} — PM2.5 Sakon Nakhon`}
+  description={`${location} — PM2.5 is ${r.pm25} μg/m³ (AQI ${r.us_aqi})`}
   ogImage={assets.ogImage}
   favicon={assets.favicon}
   aqiLevel={aqiLevel}
 >
-  <!-- Theme wrapper with dynamic color -->
-  <div class="theme-wrapper" style={`--theme-color: ${themeColor}`}>
-    <!-- Animated particle background -->
-    <ParticleBackground pm25={reading.pm25} usColor={themeColor} />
+  <div class="app">
+    <!-- Animated liquid background -->
+    <LiquidBackground pm25={r.pm25} usColor={r.us_color} />
     
-    <main class="dashboard">
-      <div class="container">
-        
-        <!-- Header -->
-        <header class="section">
-          <LocationHeader 
-            nameTh={station?.name_th || fallbackData.us_title}
-            nameEn={station?.name_en || fallbackData.us_title_en}
-            provinceTh="สกลนคร"
-            provinceEn="Sakon Nakhon"
-          />
-        </header>
-        
-        <!-- Hero PM2.5 Display -->
-        <section class="section hero-section" aria-label="PM2.5 Level">
-          <PM25Hero pm25={reading.pm25} />
-        </section>
-        
-        <!-- AQI Status Badge -->
-        <section class="section" aria-label="Air Quality Status">
-          <AQIStatus 
-            usTitle={reading.us_title}
-            usTitleEn={reading.us_title_en}
-          />
-        </section>
-        
-        <!-- Health Recommendation -->
-        <section class="section" aria-label="Health Recommendation">
-          <HealthCard 
-            usCaption={reading.us_caption}
-            usCaptionEn={reading.us_caption_en}
-          />
-        </section>
-        
-        <!-- Footer - Always show LastUpdated with reading data -->
-        <footer class="section footer-section">
-          <LastUpdated logDatetime={reading.datetime} />
-        </footer>
-        
-      </div>
+    <!-- Centered glass card with all content -->
+    <main class="centered">
+      <GlassCard 
+        location={location}
+        pm25={r.pm25}
+        aqi={r.us_aqi}
+        usTitle={r.us_title}
+        usTitleEn={r.us_title_en}
+        usCaption={r.us_caption}
+        usCaptionEn={r.us_caption_en}
+        datetime={r.datetime}
+      />
     </main>
   </div>
 </Layout>
 
 <style>
-  .theme-wrapper {
+  .app {
     min-height: 100dvh;
-    background: var(--color-bg-primary);
-    /* Dynamic ambient glow from theme color */
-    background-image: radial-gradient(
-      ellipse 100% 60% at 50% 30%,
-      rgba(var(--theme-color), 0.12) 0%,
-      rgba(var(--theme-color), 0.05) 40%,
-      transparent 70%
+    position: relative;
+    /* Light gray base */
+    background: linear-gradient(
+      180deg,
+      #a0a4ac 0%,
+      #b0b4bc 50%,
+      #c0c4cc 100%
     );
   }
 
-  .dashboard {
+  .centered {
     position: relative;
     z-index: 2;
     min-height: 100dvh;
-    padding: 1.5rem 1rem 1rem;
     display: flex;
-    flex-direction: column;
-  }
-
-  .container {
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 1.25rem;
-    flex: 1;
-  }
-
-  .section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .hero-section {
-    margin: 0.5rem 0;
-  }
-
-  .footer-section {
-    margin-top: auto;
-    padding-top: 2rem;
-    padding-bottom: 0.5rem;
+    justify-content: center;
+    padding: 1.5rem;
   }
 
   @media (min-width: 768px) {
-    .dashboard {
-      padding: 2rem 1.5rem 1.5rem;
-    }
-
-    .container {
-      gap: 1.5rem;
-      max-width: 550px;
-    }
-
-    .hero-section {
-      margin: 1rem 0;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .container {
-      gap: 1.75rem;
-      max-width: 500px;
+    .centered {
+      padding: 2rem;
     }
   }
 </style>

@@ -7,13 +7,27 @@ const { pm25 } = Astro.props;
 ---
 
 <div class="pm25-hero">
-  <div class="pm25-glow"></div>
+  <!-- 3D Extruded Number -->
+  <div class="number-3d">
+    <span class="digit-front">{pm25}</span>
+    <!-- Extruded depth layers -->
+    <span class="digit-extrude e1" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e2" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e3" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e4" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e5" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e6" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e7" aria-hidden="true">{pm25}</span>
+    <span class="digit-extrude e8" aria-hidden="true">{pm25}</span>
+    <!-- Side faces for 3D thickness -->
+    <span class="digit-side side-left" aria-hidden="true">{pm25}</span>
+    <span class="digit-side side-right" aria-hidden="true">{pm25}</span>
+    <span class="digit-side side-bottom" aria-hidden="true">{pm25}</span>
+  </div>
   
-  <div class="pm25-content">
+  <!-- Labels -->
+  <div class="labels">
     <span class="pm25-label">PM2.5</span>
-    <span class="pm25-number">
-      {pm25}
-    </span>
     <span class="pm25-unit">μg/m³</span>
   </div>
 </div>
@@ -22,107 +36,127 @@ const { pm25 } = Astro.props;
   .pm25-hero {
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 30vh;
+    padding: 1rem 0;
     z-index: 10;
   }
 
-  .pm25-glow {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(
-      ellipse at center,
-      rgba(var(--theme-color), 0.2) 0%,
-      rgba(var(--theme-color), 0.1) 30%,
-      transparent 60%
-    );
-    filter: blur(40px);
-    border-radius: 50%;
-    z-index: -1;
-    animation: breathe 4s ease-in-out infinite;
-  }
-
-  @keyframes breathe {
-    0%, 100% {
-      opacity: 0.8;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1.15);
-    }
-  }
-
-  .pm25-content {
+  .number-3d {
     position: relative;
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 16vw, 10rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  /* Front face - white glass */
+  .digit-front {
+    position: relative;
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow:
+      /* Soft glow */
+      0 0 40px rgba(255, 255, 255, 0.4),
+      0 0 80px rgba(255, 255, 255, 0.2),
+      /* Top highlight */
+      0 -2px 0 rgba(255, 255, 255, 0.8),
+      /* Edge definition */
+      0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+
+  /* Extrusion layers for depth - more layers for smoother gradient */
+  .digit-extrude {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: transparent;
     z-index: 1;
+  }
+
+  .e1 { transform: translate(0.5px, 0.5px); color: rgba(220, 220, 230, 0.5); z-index: 9; }
+  .e2 { transform: translate(1px, 1px); color: rgba(200, 200, 210, 0.45); z-index: 8; }
+  .e3 { transform: translate(1.5px, 1.5px); color: rgba(185, 185, 195, 0.4); z-index: 7; }
+  .e4 { transform: translate(2px, 2px); color: rgba(170, 170, 180, 0.35); z-index: 6; }
+  .e5 { transform: translate(2.5px, 2.5px); color: rgba(155, 155, 165, 0.3); z-index: 5; }
+  .e6 { transform: translate(3px, 3px); color: rgba(140, 140, 150, 0.25); z-index: 4; }
+  .e7 { transform: translate(3.5px, 3.5px); color: rgba(125, 125, 135, 0.2); z-index: 3; }
+  .e8 { transform: translate(4px, 4px); color: rgba(110, 110, 120, 0.15); z-index: 2; }
+
+  /* Side faces for 3D thickness illusion */
+  .digit-side {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+
+  .side-left {
+    transform: translate(-1px, 2px) skewY(-3deg);
+    color: rgba(180, 180, 190, 0.35);
+  }
+
+  .side-right {
+    transform: translate(5px, 2px) skewY(3deg);
+    color: rgba(160, 160, 170, 0.3);
+  }
+
+  .side-bottom {
+    transform: translate(2px, 4px) scaleY(0.3);
+    color: rgba(140, 140, 150, 0.25);
+    transform-origin: bottom;
+  }
+
+  /* Labels */
+  .labels {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
+    gap: 0.125rem;
+    margin-top: 0.75rem;
   }
 
   .pm25-label {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-bottom: 0.5rem;
-  }
-
-  .pm25-number {
     font-family: var(--font-display);
-    font-size: clamp(5rem, 20vw, 12rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 0.85;
-    /* Dynamic color from parent theme */
-    color: rgb(var(--theme-color));
-    text-shadow: 
-      0 0 20px rgba(var(--theme-color), 0.6),
-      0 0 40px rgba(var(--theme-color), 0.4),
-      0 0 80px rgba(var(--theme-color), 0.3),
-      0 0 120px rgba(var(--theme-color), 0.2);
-    will-change: transform;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
   }
 
   .pm25-unit {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    color: var(--color-text-dim);
-    text-transform: lowercase;
-    margin-top: 0.5rem;
+    font-family: var(--font-display);
+    font-size: clamp(0.875rem, 2vw, 1.125rem);
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.1em;
   }
 
+  /* Responsive */
   @media (min-width: 768px) {
     .pm25-hero {
-      min-height: 35vh;
+      padding: 1.5rem 0;
     }
 
-    .pm25-label {
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
+    .number-3d {
+      font-size: clamp(6rem, 14vw, 12rem);
     }
 
-    .pm25-number {
-      font-size: clamp(6rem, 15vw, 14rem);
-    }
-
-    .pm25-unit {
-      font-size: 1rem;
-      margin-top: 0.75rem;
+    .labels {
+      margin-top: 1rem;
     }
   }
 
+  /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .pm25-glow {
-      animation: none;
+    .digit-front {
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
   }
 </style>

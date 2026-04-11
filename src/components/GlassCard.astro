@@ -1,0 +1,270 @@
+---
+interface Props {
+  location: string;
+  pm25: number;
+  aqi: number;
+  usTitle: string;
+  usTitleEn: string;
+  usCaption: string;
+  usCaptionEn: string;
+  datetime: string;
+}
+
+const { location, pm25, aqi, usTitle, usTitleEn, usCaption, usCaptionEn, datetime } = Astro.props;
+
+// Format time
+function formatTime(datetime: string): string {
+  try {
+    const date = new Date(datetime);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${hours}:${minutes} · ${day}/${month}`;
+  } catch {
+    return datetime;
+  }
+}
+
+const formattedTime = formatTime(datetime);
+---
+
+<div class="glass-dashboard">
+  <div class="glass-content">
+    <!-- Location -->
+    <header class="location">{location}</header>
+    
+    <!-- PM2.5 Number - flat glass style -->
+    <div class="pm25-section">
+      <div class="pm25-number">{pm25}</div>
+      <div class="pm25-meta">
+        <span class="pm25-label">PM2.5</span>
+        <span class="pm25-unit">μg/m³</span>
+      </div>
+    </div>
+    
+    <!-- AQI Badge -->
+    <div class="aqi-badge">
+      <span class="aqi-dot" aria-hidden="true">●</span>
+      <span class="aqi-value">AQI {aqi}</span>
+    </div>
+    
+    <!-- Status & Description -->
+    <div class="status-section">
+      <h2 class="status-title">{usTitleEn}</h2>
+      <p class="status-desc">{usCaptionEn}</p>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="card-footer">
+      <time>{formattedTime}</time>
+      <span class="source">CCDC Station</span>
+    </footer>
+  </div>
+  
+  <!-- Glass shine effect -->
+  <div class="glass-shine" aria-hidden="true"></div>
+</div>
+
+<style>
+  .glass-dashboard {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem;
+    border-radius: 24px;
+    overflow: hidden;
+    
+    /* Frosted glass */
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    
+    /* Soft shadow */
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      0 0 100px rgba(235, 120, 50, 0.1);
+    
+    text-align: center;
+  }
+
+  .glass-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  /* Location */
+  .location {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.02em;
+  }
+
+  /* PM2.5 Section */
+  .pm25-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pm25-number {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 15vw, 8rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: rgba(255, 255, 255, 0.95);
+    /* Subtle glass effect on text */
+    text-shadow: 0 2px 20px rgba(255, 255, 255, 0.2);
+  }
+
+  .pm25-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pm25-label {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.1em;
+  }
+
+  .pm25-unit {
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* AQI Badge */
+  .aqi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(235, 120, 50, 0.2);
+    border: 1px solid rgba(235, 120, 50, 0.3);
+    border-radius: 50px;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .aqi-dot {
+    color: rgb(235, 120, 50);
+    font-size: 0.75rem;
+  }
+
+  /* Status Section */
+  .status-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 320px;
+  }
+
+  .status-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .status-desc {
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0;
+  }
+
+  /* Footer */
+  .card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .card-footer time {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.05em;
+  }
+
+  .card-footer .source {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Glass shine */
+  .glass-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Responsive */
+  @media (min-width: 768px) {
+    .glass-dashboard {
+      max-width: 480px;
+      padding: 2.5rem 3rem;
+    }
+
+    .location {
+      font-size: 1.125rem;
+    }
+
+    .pm25-number {
+      font-size: clamp(6rem, 12vw, 9rem);
+    }
+
+    .status-title {
+      font-size: 1.5rem;
+    }
+
+    .status-desc {
+      font-size: 1rem;
+    }
+  }
+
+  /* Safari fix */
+  @supports not (backdrop-filter: blur(24px)) {
+    .glass-dashboard {
+      background: rgba(120, 120, 130, 0.85);
+    }
+  }
+</style>
