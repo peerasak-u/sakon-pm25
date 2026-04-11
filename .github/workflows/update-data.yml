@@ -212,7 +212,7 @@ jobs:
           git push
 
       - name: Trigger Cloudflare Pages Rebuild
-        if: success() && secrets.CLOUDFLARE_DEPLOY_HOOK != ''
+        if: success() && env.CLOUDFLARE_DEPLOY_HOOK != ''
         run: |
           echo "Triggering Cloudflare Pages rebuild..."
           curl -X POST "${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}"
