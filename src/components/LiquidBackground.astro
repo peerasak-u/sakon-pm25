@@ -128,7 +128,7 @@ const palette = getLightPalette(r, g, b);
       }
     `;
 
-    // Fragment shader - light theme with large soft blobs
+    // Fragment shader - light theme with multiple animated shapes
     private fragmentShaderSource = `
       precision mediump float;
       
@@ -159,33 +159,54 @@ const palette = getLightPalette(r, g, b);
       
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
-        float time = uTime * uSpeed * 0.05;
-        
-        // Create large soft blob shapes - larger scale
-        float n1 = noise(uv * 1.5 + time * 0.3);
-        float n2 = noise(uv * 1.0 - time * 0.25 + vec2(100.0));
-        float n3 = noise(uv * 0.8 + time * 0.15 + vec2(200.0));
-        
-        // Large blob mask - more contrast
-        float blob1 = smoothstep(0.35, 0.65, n1);
-        float blob2 = smoothstep(0.3, 0.7, n2);
-        float blob3 = smoothstep(0.4, 0.6, n3);
+        float time = uTime * uSpeed * 0.12;
         
         // Base gray background
         vec3 baseColor = uBgColor / 255.0;
+        vec3 color = baseColor;
         
-        // Mix in accent colors for blobs - stronger influence
-        vec3 color = mix(baseColor, uAccent1 / 255.0, blob1 * 0.7);
-        color = mix(color, uAccent2 / 255.0, blob2 * 0.5);
-        color = mix(color, (uAccent1 + uAccent2) / 510.0, blob3 * 0.3);
+        // Multiple animated blobs with different sizes and speeds
+        // Large orange blob (top-right)
+        float n1 = noise(uv * 0.7 + time * 0.4 + vec2(50.0, 100.0));
+        float blob1 = smoothstep(0.4, 0.7, n1);
+        color = mix(color, uAccent1 / 255.0, blob1 * 0.8);
+        
+        // Large peach blob (bottom-left)
+        float n2 = noise(uv * 0.6 - time * 0.35 + vec2(200.0, -50.0));
+        float blob2 = smoothstep(0.35, 0.65, n2);
+        color = mix(color, uAccent2 / 255.0, blob2 * 0.6);
+        
+        // Medium orange blob (center-left, faster)
+        float n3 = noise(uv * 1.2 + time * 0.6 + vec2(-100.0, 150.0));
+        float blob3 = smoothstep(0.3, 0.6, n3);
+        color = mix(color, (uAccent1 * 1.2) / 255.0, blob3 * 0.5);
+        
+        // Small fast blob (top)
+        float n4 = noise(uv * 2.0 + time * 0.8 + vec2(0.0, -100.0));
+        float blob4 = smoothstep(0.25, 0.55, n4);
+        color = mix(color, uAccent2 / 255.0, blob4 * 0.4);
+        
+        // Drifting gray warm blob (right side)
+        float n5 = noise(uv * 0.9 - time * 0.3 + vec2(300.0, 50.0));
+        float blob5 = smoothstep(0.4, 0.7, n5);
+        color = mix(color, vec3(0.75, 0.72, 0.70), blob5 * 0.35);
+        
+        // Small accent blob (bottom-right)
+        float n6 = noise(uv * 1.5 + time * 0.5 + vec2(250.0, 200.0));
+        float blob6 = smoothstep(0.3, 0.6, n6);
+        color = mix(color, uAccent1 / 255.0, blob6 * 0.45);
+        
+        // Flowing orange streak (horizontal)
+        float streak = smoothstep(0.3, 0.5, noise(vec2(uv.x * 3.0 + time * 0.7, uv.y * 0.5)));
+        color = mix(color, uAccent1 / 255.0, streak * 0.25);
         
         // Add subtle noise texture
-        float grain = noise(uv * 500.0) * 0.015;
+        float grain = noise(uv * 800.0) * 0.012;
         color += grain;
         
         // Soft vignette for depth
-        float vignette = 1.0 - smoothstep(0.4, 1.4, length((uv - 0.5) * 1.2));
-        color = mix(color * 0.85, color, vignette);
+        float vignette = 1.0 - smoothstep(0.3, 1.5, length((uv - 0.5) * 1.3));
+        color = mix(color * 0.88, color, vignette);
         
         gl_FragColor = vec4(color, 1.0);
       }
@@ -203,7 +224,7 @@ const palette = getLightPalette(r, g, b);
       this.accent1 = accent1Attr.split(',').map(Number);
       this.accent2 = accent2Attr.split(',').map(Number);
       
-      this.speed = 0.8; // Faster animation for visible movement
+      this.speed = 2.5; // Much faster animation
       
       this.init();
       this.initParticles();
