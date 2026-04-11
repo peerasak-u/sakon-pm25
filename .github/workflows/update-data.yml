@@ -39,10 +39,13 @@ jobs:
             exit 1
           fi
 
+          # Clean URL (remove any comments)
+          CLEAN_URL=$(echo "$CCDC_API_URL" | sed 's/ *#.*//')
+          
           # Build full URL with API key
-          export FULL_API_URL="${CCDC_API_URL}?apikey=${CCDC_API_KEY}"
+          export FULL_API_URL="${CLEAN_URL}?apikey=${CCDC_API_KEY}"
           echo "Fetching from CCDC API..."
-          echo "URL: ${CCDC_API_URL}"
+          echo "URL: $CLEAN_URL"
 
           node << 'EOF'
           const fs = require('fs');
@@ -53,7 +56,11 @@ jobs:
 
           async function fetchData() {
             try {
-              const response = await fetch(process.env.FULL_API_URL);
+              const response = await fetch(process.env.FULL_API_URL, {
+                headers: {
+                  'Accept': 'application/json, text/javascript, */*; q=0.01'
+                }
+              });
               if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
@@ -77,6 +84,10 @@ jobs:
               return station;
             } else if (data && typeof data === 'object') {
               // Single object response from /station endpoint
+              if (data.error) {
+                console.error(`API Error: ${data.error}`);
+                return null;
+              }
               if (data.id === id) {
                 return data;
               }
@@ -152,7 +163,6 @@ jobs:
               humid: station.humid,
               us_title: station.us_title,
               us_title_en: station.us_title_en,
-              us_title_th: station.us_title,
               us_caption: station.us_caption,
               us_caption_en: station.us_caption_en
             };

@@ -19,7 +19,7 @@ try {
     const envContent = fs.readFileSync(envPath, 'utf8');
     envContent.split('\n').forEach(line => {
       const match = line.match(/^([^#=]+)=(.*)$/);
-      if (match) {
+      if (match && match[2].trim()) {
         process.env[match[1].trim()] = match[2].trim();
       }
     });
@@ -30,7 +30,7 @@ try {
 }
 
 // Configuration
-const API_URL = process.env.CCDC_API_URL;
+const API_URL = process.env.CCDC_API_URL?.replace(/#.*/, '').trim(); // Remove comments
 const API_KEY = process.env.CCDC_API_KEY;
 const STATION_ID = process.env.STATION_ID || '4473';
 const DATA_FILE = path.join(__dirname, '..', 'src', 'data', 'pm25-history.json');
@@ -62,10 +62,14 @@ console.log(`  Data File: ${DATA_FILE}\n`);
 const fullUrl = `${API_URL}?apikey=${API_KEY}`;
 console.log(`Fetching: ${API_URL}?apikey=***\n`);
 
-// Fetch data
+// Fetch data with proper headers
 async function fetchData() {
   try {
-    const response = await fetch(fullUrl);
+    const response = await fetch(fullUrl, {
+      headers: {
+        'Accept': 'application/json, text/javascript, */*; q=0.01'
+      }
+    });
     
     console.log(`Response Status: ${response.status} ${response.statusText}`);
     
@@ -113,8 +117,12 @@ function findStation(data, id) {
     if (data.id === id) {
       return data;
     }
+    if (data.error) {
+      console.error(`❌ API Error: ${data.error}`);
+      return null;
+    }
     console.error(`❌ Configured station is ${data.id}, expected ${id}`);
-    console.log(`   Current: ${data.dustboy_name}`);
+    console.log(`   Current: ${data.dustboy_name || 'unknown'}`);
     console.log('\n   Please configure station 4473 at:');
     console.log('   https://open-api.cmuccdc.org/setting');
     return null;
