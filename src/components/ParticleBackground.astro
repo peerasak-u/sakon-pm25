@@ -1,0 +1,219 @@
+---
+interface Props {
+  pm25: number;
+  usColor: string;
+}
+
+const { pm25, usColor } = Astro.props;
+
+// Calculate particle density based on PM2.5
+function getParticleCount(pm25: number): number {
+  if (pm25 <= 12) return 25;
+  if (pm25 <= 35) return 60;
+  if (pm25 <= 55) return 120;
+  if (pm25 <= 150) return 250;
+  return 400;
+}
+
+// Calculate particle speed based on PM2.5
+function getParticleSpeed(pm25: number): number {
+  if (pm25 <= 12) return 0.3;
+  if (pm25 <= 35) return 0.6;
+  if (pm25 <= 55) return 1.0;
+  if (pm25 <= 150) return 1.5;
+  return 2.2;
+}
+
+const particleCount = getParticleCount(pm25);
+const baseSpeed = getParticleSpeed(pm25);
+---
+
+<canvas 
+  id="particle-canvas" 
+  class="particle-background"
+  data-count={particleCount}
+  data-speed={baseSpeed}
+  aria-hidden="true"
+></canvas>
+
+<div class="particle-overlay"></div>
+
+<style>
+  .particle-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .particle-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 0%,
+      rgba(10, 10, 11, 0.5) 70%,
+      rgba(10, 10, 11, 0.9) 100%
+    );
+  }
+</style>
+
+<script>
+  interface Particle {
+    x: number;
+    y: number;
+    size: number;
+    speedX: number;
+    speedY: number;
+    opacity: number;
+    drift: number;
+  }
+
+  class ParticleSystem {
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private particles: Particle[] = [];
+    private animationId: number = 0;
+    private count: number;
+    private baseSpeed: number;
+    private colorRGB: number[];
+
+    constructor(canvas: HTMLCanvasElement) {
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d')!;
+      
+      // Read configuration from data attributes
+      this.count = parseInt(canvas.dataset.count || '50');
+      this.baseSpeed = parseFloat(canvas.dataset.speed || '0.5');
+      
+      // Read color from CSS variable --theme-color
+      const root = document.documentElement;
+      const computedStyle = getComputedStyle(document.querySelector('.theme-wrapper') || document.body);
+      const themeColor = computedStyle.getPropertyValue('--theme-color').trim() || '255,255,255';
+      this.colorRGB = themeColor.split(',').map(Number);
+      
+      this.resize();
+      this.initParticles();
+      this.animate();
+      
+      window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    }
+
+    initParticles() {
+      this.particles = [];
+      for (let i = 0; i < this.count; i++) {
+        this.particles.push(this.createParticle());
+      }
+    }
+
+    createParticle(): Particle {
+      return {
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * this.canvas.height,
+        size: Math.random() * 2 + 0.5,
+        speedX: (Math.random() - 0.5) * this.baseSpeed,
+        speedY: (Math.random() - 0.5) * this.baseSpeed + 0.2,
+        opacity: Math.random() * 0.5 + 0.1,
+        drift: Math.random() * 0.02 - 0.01
+      };
+    }
+
+    animate() {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      
+      const [r, g, b] = this.colorRGB;
+      
+      this.particles.forEach((particle, index) => {
+        // Add organic movement
+        particle.speedX += Math.sin(Date.now() * 0.001 + index) * 0.002;
+        particle.speedY += Math.cos(Date.now() * 0.001 + index * 0.5) * 0.001;
+        
+        // Apply drift
+        particle.x += particle.speedX + particle.drift;
+        particle.y += particle.speedY;
+        
+        // Wrap around screen
+        if (particle.x < 0) particle.x = this.canvas.width;
+        if (particle.x > this.canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = this.canvas.height;
+        if (particle.y > this.canvas.height) particle.y = 0;
+        
+        // Draw particle
+        this.ctx.beginPath();
+        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${particle.opacity})`;
+        this.ctx.fill();
+        
+        // Add glow effect for larger particles
+        if (particle.size > 1.5) {
+          this.ctx.beginPath();
+          this.ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+          this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${particle.opacity * 0.3})`;
+          this.ctx.fill();
+        }
+      });
+      
+      // Draw connections between nearby particles
+      this.drawConnections();
+      
+      this.animationId = requestAnimationFrame(() => this.animate());
+    }
+
+    drawConnections() {
+      const [r, g, b] = this.colorRGB;
+      const connectionDistance = 100;
+      const maxConnections = 3;
+      
+      for (let i = 0; i < this.particles.length; i++) {
+        let connections = 0;
+        for (let j = i + 1; j < this.particles.length && connections < maxConnections; j++) {
+          const dx = this.particles[i].x - this.particles[j].x;
+          const dy = this.particles[i].y - this.particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < connectionDistance) {
+            const opacity = (1 - distance / connectionDistance) * 0.1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
+            this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
+            this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            this.ctx.lineWidth = 0.5;
+            this.ctx.stroke();
+            connections++;
+          }
+        }
+      }
+    }
+
+    destroy() {
+      cancelAnimationFrame(this.animationId);
+    }
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  function init() {
+    const canvas = document.getElementById('particle-canvas') as HTMLCanvasElement;
+    if (canvas) {
+      new ParticleSystem(canvas);
+    }
+  }
+</script>

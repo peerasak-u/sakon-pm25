@@ -1,0 +1,162 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ParticleBackground from '../components/ParticleBackground.astro';
+import LocationHeader from '../components/LocationHeader.astro';
+import PM25Hero from '../components/PM25Hero.astro';
+import AQIStatus from '../components/AQIStatus.astro';
+import HealthCard from '../components/HealthCard.astro';
+import LastUpdated from '../components/LastUpdated.astro';
+
+// Load data from JSON file
+import data from '../data/pm25-history.json';
+
+// Get latest reading (if any)
+const latest = data.readings[data.readings.length - 1];
+const station = data.station;
+
+// Fallback data for display before real data arrives
+const fallbackData = {
+  pm25: 25,
+  us_aqi: 82,
+  us_title: 'คุณภาพอากาศปานกลาง',
+  us_title_en: 'Moderate',
+  us_caption: 'ประชาชนทั่วไปควรเฝ้าระวังสุขภาพ หากมีอาการผิดปกติควรพบแพทย์',
+  us_caption_en: 'Air quality is acceptable. However, there may be a risk for some people.',
+  us_color: '255,255,0',
+  datetime: new Date().toISOString().replace('T', ' ').slice(0, 19)
+};
+
+// Use actual data or fallback - ALWAYS show something
+const reading = latest || fallbackData;
+
+// Page metadata
+const pageTitle = `${reading.us_title_en} — PM2.5 สกลนคร | Sakon Air Quality`;
+const pageDescription = `คุณภาพอากาศ ${station?.name_th || 'สวนสมเด็จพระศรีนครินทร์'} — PM2.5 อยู่ที่ ${reading.pm25} μg/m³ (${reading.us_title_en})`;
+
+// Theme color from reading
+const themeColor = reading.us_color;
+---
+
+<Layout title={pageTitle}>
+  <!-- Theme wrapper with dynamic color -->
+  <div class="theme-wrapper" style={`--theme-color: ${themeColor}`}>
+    <!-- Animated particle background -->
+    <ParticleBackground pm25={reading.pm25} usColor={themeColor} />
+    
+    <main class="dashboard">
+      <div class="container">
+        
+        <!-- Header -->
+        <header class="section">
+          <LocationHeader 
+            nameTh={station?.name_th || fallbackData.us_title}
+            nameEn={station?.name_en || fallbackData.us_title_en}
+            provinceTh="สกลนคร"
+            provinceEn="Sakon Nakhon"
+          />
+        </header>
+        
+        <!-- Hero PM2.5 Display -->
+        <section class="section hero-section" aria-label="PM2.5 Level">
+          <PM25Hero pm25={reading.pm25} />
+        </section>
+        
+        <!-- AQI Status Badge -->
+        <section class="section" aria-label="Air Quality Status">
+          <AQIStatus 
+            usTitle={reading.us_title}
+            usTitleEn={reading.us_title_en}
+          />
+        </section>
+        
+        <!-- Health Recommendation -->
+        <section class="section" aria-label="Health Recommendation">
+          <HealthCard 
+            usCaption={reading.us_caption}
+            usCaptionEn={reading.us_caption_en}
+          />
+        </section>
+        
+        <!-- Footer - Always show LastUpdated with reading data -->
+        <footer class="section footer-section">
+          <LastUpdated logDatetime={reading.datetime} />
+        </footer>
+        
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .theme-wrapper {
+    min-height: 100dvh;
+    background: var(--color-bg-primary);
+    /* Dynamic ambient glow from theme color */
+    background-image: radial-gradient(
+      ellipse 100% 60% at 50% 30%,
+      rgba(var(--theme-color), 0.12) 0%,
+      rgba(var(--theme-color), 0.05) 40%,
+      transparent 70%
+    );
+  }
+
+  .dashboard {
+    position: relative;
+    z-index: 2;
+    min-height: 100dvh;
+    padding: 1.5rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.25rem;
+    flex: 1;
+  }
+
+  .section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-section {
+    margin: 0.5rem 0;
+  }
+
+  .footer-section {
+    margin-top: auto;
+    padding-top: 2rem;
+    padding-bottom: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .dashboard {
+      padding: 2rem 1.5rem 1.5rem;
+    }
+
+    .container {
+      gap: 1.5rem;
+      max-width: 550px;
+    }
+
+    .hero-section {
+      margin: 1rem 0;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      gap: 1.75rem;
+      max-width: 500px;
+    }
+  }
+</style>

@@ -1,0 +1,179 @@
+name: Update PM2.5 Data
+
+on:
+  schedule:
+    - cron: '1 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch and update PM2.5 data
+        env:
+          CCDC_API_URL: ${{ secrets.CCDC_API_URL }}
+        run: |
+          if [ -z "$CCDC_API_URL" ]; then
+            echo "Error: CCDC_API_URL secret is not set"
+            exit 1
+          fi
+
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          const DATA_FILE = 'src/data/pm25-history.json';
+          const STATION_ID = '4473';
+
+          async function fetchData() {
+            try {
+              const response = await fetch(process.env.CCDC_API_URL);
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const data = await response.json();
+              return data;
+            } catch (error) {
+              console.error('Failed to fetch data:', error.message);
+              process.exit(1);
+            }
+          }
+
+          function findStation(data, id) {
+            if (!Array.isArray(data)) {
+              console.error('API response is not an array');
+              return null;
+            }
+            const station = data.find(s => s.id === id);
+            if (!station) {
+              console.error(`Station ${id} not found in API response`);
+              return null;
+            }
+            return station;
+          }
+
+          function loadHistory() {
+            try {
+              const content = fs.readFileSync(DATA_FILE, 'utf8');
+              return JSON.parse(content);
+            } catch (error) {
+              console.log('Creating new history file');
+              return {
+                station: {
+                  id: STATION_ID,
+                  name_th: "สวนสมเด็จพระศรีนครินทร์ (สระพังทอง)",
+                  name_en: "Srisanakarin Park (Saphang Thong)"
+                },
+                readings: [],
+                last_updated: ""
+              };
+            }
+          }
+
+          function saveHistory(history) {
+            const dir = path.dirname(DATA_FILE);
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(DATA_FILE, JSON.stringify(history, null, 2) + '\n');
+          }
+
+          async function main() {
+            console.log('Fetching CCDC API data...');
+            const apiData = await fetchData();
+            
+            console.log('Looking for station', STATION_ID);
+            const station = findStation(apiData, STATION_ID);
+            if (!station) {
+              process.exit(1);
+            }
+
+            console.log('Found station:', station.dustboy_name);
+
+            const history = loadHistory();
+
+            // Update station info if changed
+            history.station = {
+              id: station.id,
+              dustboy_id: station.dustboy_id,
+              name_th: station.dustboy_name,
+              name_en: station.dustboy_name_en,
+              province_id: station.province_id,
+              lat: station.dustboy_lat,
+              lon: station.dustboy_lon
+            };
+
+            // Create reading entry
+            const reading = {
+              datetime: station.log_datetime,
+              pm25: station.pm25,
+              pm10: station.pm10,
+              us_aqi: parseInt(station.us_aqi),
+              th_aqi: station.th_aqi,
+              us_color: station.us_color,
+              temp: station.temp,
+              humid: station.humid,
+              us_title: station.us_title,
+              us_title_en: station.us_title_en,
+              us_caption: station.us_caption,
+              us_caption_en: station.us_caption_en
+            };
+
+            // Check if this reading already exists (by datetime)
+            const exists = history.readings.some(r => r.datetime === reading.datetime);
+            if (exists) {
+              console.log('Reading for', reading.datetime, 'already exists, skipping');
+            } else {
+              history.readings.push(reading);
+              console.log('Added new reading:', reading.datetime, 'PM2.5:', reading.pm25);
+            }
+
+            // Keep only last 90 days of readings (2160 readings at hourly intervals)
+            const MAX_READINGS = 2160;
+            if (history.readings.length > MAX_READINGS) {
+              history.readings = history.readings.slice(-MAX_READINGS);
+              console.log('Trimmed readings to last', MAX_READINGS);
+            }
+
+            // Update last_updated timestamp
+            history.last_updated = new Date().toISOString();
+
+            saveHistory(history);
+            console.log('Data saved successfully');
+            console.log('Total readings:', history.readings.length);
+          }
+
+          main().catch(error => {
+            console.error('Error:', error);
+            process.exit(1);
+          });
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          if git diff --quiet HEAD -- src/data/pm25-history.json; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git add src/data/pm25-history.json
+          git commit -m "Update PM2.5 data: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push

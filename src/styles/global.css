@@ -1,0 +1,157 @@
+/* Font Imports */
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* Dark Theme Design Tokens */
+:root {
+  /* Dynamic Theme Color - Set by page based on AQI */
+  --theme-color: 255, 255, 255;
+  
+  /* Dark Base Colors */
+  --color-bg-primary: #0a0a0b;
+  --color-bg-secondary: #121214;
+  --color-bg-tertiary: #1a1a1e;
+  --color-surface: #202024;
+  
+  /* Text Colors (High contrast for dark bg) */
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-dim: #52525b;
+  
+  /* Accent */
+  --color-lake-teal: #14b8a6;
+  --color-lake-teal-dim: rgba(20, 184, 166, 0.1);
+  
+  /* Dynamic AQI Colors (More saturated for dark bg) */
+  --color-aqi-good: #22c55e;
+  --color-aqi-moderate: #eab308;
+  --color-aqi-sensitive: #f97316;
+  --color-aqi-unhealthy: #ef4444;
+  --color-aqi-very-unhealthy: #a855f7;
+  --color-aqi-hazardous: #991b1b;
+
+  /* Typography */
+  --font-display: 'Satoshi', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Spacing */
+  --section-gap: clamp(1.5rem, 4vh, 3rem);
+  --card-padding: 1.5rem;
+  --card-padding-mobile: 1.25rem;
+
+  /* Border Radius */
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Animation Timing */
+  --transition-fast: 150ms ease;
+  --transition-base: 300ms ease;
+  --transition-slow: 500ms ease;
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Typography Utilities */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Display Text (PM2.5 Hero) */
+.text-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-size: clamp(6rem, 22vw, 14rem);
+}
+
+/* Heading Text */
+.text-heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* Body Text */
+.text-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.7;
+  max-width: 55ch;
+}
+
+/* Metadata Text */
+.text-meta {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+/* Label Text (AQI Status) */
+.text-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Color Utilities */
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-lake {
+  color: var(--color-lake-teal);
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
