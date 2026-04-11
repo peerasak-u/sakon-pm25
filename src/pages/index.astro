@@ -29,6 +29,48 @@ const fallbackData = {
 // Use actual data or fallback - ALWAYS show something
 const reading = latest || fallbackData;
 
+// Determine AQI level for dynamic assets
+function getAQILevel(usAqi: number): 'good' | 'moderate' | 'sensitive' | 'unhealthy' | 'very-unhealthy' | 'hazardous' {
+  if (usAqi <= 50) return 'good';
+  if (usAqi <= 100) return 'moderate';
+  if (usAqi <= 150) return 'sensitive';
+  if (usAqi <= 200) return 'unhealthy';
+  if (usAqi <= 300) return 'very-unhealthy';
+  return 'hazardous';
+}
+
+const aqiLevel = getAQILevel(reading.us_aqi);
+
+// Map AQI level to assets
+const assetMap: Record<string, { favicon: string; ogImage: string }> = {
+  'good': {
+    favicon: '/favicon/favicon-good.svg',
+    ogImage: '/og/og-aqi-good.svg'
+  },
+  'moderate': {
+    favicon: '/favicon/favicon-moderate.svg',
+    ogImage: '/og/og-aqi-moderate.svg'
+  },
+  'sensitive': {
+    favicon: '/favicon/favicon-sensitive.svg',
+    ogImage: '/og/og-aqi-sensitive.svg'
+  },
+  'unhealthy': {
+    favicon: '/favicon/favicon-unhealthy.svg',
+    ogImage: '/og/og-aqi-unhealthy.svg'
+  },
+  'very-unhealthy': {
+    favicon: '/favicon/favicon-very-unhealthy.svg',
+    ogImage: '/og/og-aqi-very-unhealthy.svg'
+  },
+  'hazardous': {
+    favicon: '/favicon/favicon-hazardous.svg',
+    ogImage: '/og/og-aqi-hazardous.svg'
+  }
+};
+
+const assets = assetMap[aqiLevel];
+
 // Page metadata
 const pageTitle = `${reading.us_title_en} — PM2.5 สกลนคร | Sakon Air Quality`;
 const pageDescription = `คุณภาพอากาศ ${station?.name_th || 'สวนสมเด็จพระศรีนครินทร์'} — PM2.5 อยู่ที่ ${reading.pm25} μg/m³ (${reading.us_title_en})`;
@@ -37,7 +79,13 @@ const pageDescription = `คุณภาพอากาศ ${station?.name_th ||
 const themeColor = reading.us_color;
 ---
 
-<Layout title={pageTitle}>
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  ogImage={assets.ogImage}
+  favicon={assets.favicon}
+  aqiLevel={aqiLevel}
+>
   <!-- Theme wrapper with dynamic color -->
   <div class="theme-wrapper" style={`--theme-color: ${themeColor}`}>
     <!-- Animated particle background -->

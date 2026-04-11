@@ -3,9 +3,51 @@ import '../styles/global.css';
 
 interface Props {
   title: string;
+  description?: string;
+  ogImage?: string;
+  favicon?: string;
+  aqiLevel?: 'good' | 'moderate' | 'sensitive' | 'unhealthy' | 'very-unhealthy' | 'hazardous';
 }
 
-const { title } = Astro.props;
+const { 
+  title, 
+  description = 'ตรวจสอบค่าฝุ่น PM2.5 สวนสมเด็จพระศรีนครินทร์ จังหวัดสกลนคร แบบเรียลไทม์',
+  ogImage = '/og/og-aqi-moderate.svg',
+  favicon = '/favicon/favicon-moderate.svg',
+  aqiLevel = 'moderate'
+} = Astro.props;
+
+// AQI-specific CTA messages
+const ctaMessages: Record<string, { th: string; en: string }> = {
+  'good': {
+    th: 'อากาศดีมาก! ออกไปวิ่งที่สวนศรีนครินทร์ได้เลย',
+    en: 'Air is great! Perfect for jogging at Srisanakarin Park'
+  },
+  'moderate': {
+    th: 'อากาศพอใช้ วิ่งเบาๆ ได้ แต่ระวังสุขภาพ',
+    en: 'Moderate air quality. Light jogging OK, but stay aware'
+  },
+  'sensitive': {
+    th: 'กลุ่มเสี่ยงควรเลี่ยง คนอื่นวิ่งสั้นๆ พอ',
+    en: 'Sensitive groups avoid. Others keep workouts short'
+  },
+  'unhealthy': {
+    th: 'อากาศไม่ดี งดวิ่งกลางแจ้งวันนี้',
+    en: 'Unhealthy air. Skip outdoor running today'
+  },
+  'very-unhealthy': {
+    th: 'อากาศแย่มาก อยู่ในอาคารดีที่สุด',
+    en: 'Very unhealthy. Stay indoors completely'
+  },
+  'hazardous': {
+    th: 'อากาศอันตราย! ห้ามออกจากบ้านเด็ดขาด',
+    en: 'Hazardous! Do not go outside'
+  }
+};
+
+const cta = ctaMessages[aqiLevel] || ctaMessages['moderate'];
+const fullDescription = `${cta.th} | ${cta.en}`;
+const canonicalUrl = 'https://sakon-dust.pages.dev'; // Update with actual domain when available
 ---
 
 <!DOCTYPE html>
@@ -13,19 +55,41 @@ const { title } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta -->
     <title>{title}</title>
-    <meta name="description" content="ตรวจสอบค่าฝุ่น PM2.5 สวนสมเด็จพระศรีนครินทร์ จังหวัดสกลนคร แบบเรียลไทม์" />
+    <meta name="description" content={fullDescription} />
     <meta name="theme-color" content="#0a0a0b" />
     
-    <!-- Open Graph -->
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content="ตรวจสอบคุณภาพอากาศสกลนครแบบเรียลไทม์" />
-    <meta property="og:type" content="website" />
+    <!-- Favicon - Dynamic based on AQI -->
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+    <link rel="apple-touch-icon" href={favicon} />
     
-    <!-- Preconnect -->
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={fullDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={`${canonicalUrl}${ogImage}`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/svg+xml" />
+    <meta property="og:site_name" content="PM2.5 สกลนคร | Sakon Air Quality" />
+    <meta property="og:locale" content="th_TH" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={fullDescription} />
+    <meta name="twitter:image" content={`${canonicalUrl}${ogImage}`} />
+    
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://api.fontshare.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalUrl} />
   </head>
   <body>
     <slot />
