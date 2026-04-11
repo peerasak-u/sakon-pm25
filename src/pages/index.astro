@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ParticleBackground from '../components/ParticleBackground.astro';
+import LiquidBackground from '../components/LiquidBackground.astro';
 import LocationHeader from '../components/LocationHeader.astro';
 import PM25Hero from '../components/PM25Hero.astro';
 import AQIStatus from '../components/AQIStatus.astro';
@@ -77,6 +77,10 @@ const pageDescription = `คุณภาพอากาศ ${station?.name_th ||
 
 // Theme color from reading
 const themeColor = reading.us_color;
+
+// Station name
+const stationNameTh = station?.name_th || 'สวนสมเด็จพระศรีนครินทร์ สกลนคร';
+const stationNameEn = station?.name_en || 'Sraphangthong pond, Sakon Nakhon';
 ---
 
 <Layout 
@@ -87,18 +91,18 @@ const themeColor = reading.us_color;
   aqiLevel={aqiLevel}
 >
   <!-- Theme wrapper with dynamic color -->
-  <div class="theme-wrapper" style={`--theme-color: ${themeColor}`}>
-    <!-- Animated particle background -->
-    <ParticleBackground pm25={reading.pm25} usColor={themeColor} />
+  <div class="glassmorphism-theme" style={`--theme-color: ${themeColor}`}>
+    <!-- Animated liquid gradient background -->
+    <LiquidBackground pm25={reading.pm25} usColor={themeColor} />
     
     <main class="dashboard">
       <div class="container">
         
         <!-- Header -->
-        <header class="section">
+        <header class="section header-section">
           <LocationHeader 
-            nameTh={station?.name_th || fallbackData.us_title}
-            nameEn={station?.name_en || fallbackData.us_title_en}
+            nameTh={stationNameTh}
+            nameEn={stationNameEn}
             provinceTh="สกลนคร"
             provinceEn="Sakon Nakhon"
           />
@@ -110,7 +114,7 @@ const themeColor = reading.us_color;
         </section>
         
         <!-- AQI Status Badge -->
-        <section class="section" aria-label="Air Quality Status">
+        <section class="section status-section" aria-label="Air Quality Status">
           <AQIStatus 
             usTitle={reading.us_title}
             usTitleEn={reading.us_title_en}
@@ -118,14 +122,14 @@ const themeColor = reading.us_color;
         </section>
         
         <!-- Health Recommendation -->
-        <section class="section" aria-label="Health Recommendation">
+        <section class="section health-section" aria-label="Health Recommendation">
           <HealthCard 
             usCaption={reading.us_caption}
             usCaptionEn={reading.us_caption_en}
           />
         </section>
         
-        <!-- Footer - Always show LastUpdated with reading data -->
+        <!-- Footer -->
         <footer class="section footer-section">
           <LastUpdated logDatetime={reading.datetime} />
         </footer>
@@ -136,16 +140,16 @@ const themeColor = reading.us_color;
 </Layout>
 
 <style>
-  .theme-wrapper {
+  .glassmorphism-theme {
     min-height: 100dvh;
-    background: var(--color-bg-primary);
-    /* Dynamic ambient glow from theme color */
-    background-image: radial-gradient(
-      ellipse 100% 60% at 50% 30%,
-      rgba(var(--theme-color), 0.12) 0%,
-      rgba(var(--theme-color), 0.05) 40%,
-      transparent 70%
+    /* Dark base for glassmorphism */
+    background: linear-gradient(
+      180deg,
+      #0d0d12 0%,
+      #151520 50%,
+      #1a1a25 100%
     );
+    position: relative;
   }
 
   .dashboard {
@@ -165,7 +169,7 @@ const themeColor = reading.us_color;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 1.25rem;
+    gap: 1.5rem;
     flex: 1;
   }
 
@@ -176,8 +180,20 @@ const themeColor = reading.us_color;
     align-items: center;
   }
 
+  .header-section {
+    margin-top: 0.5rem;
+  }
+
   .hero-section {
     margin: 0.5rem 0;
+  }
+
+  .status-section {
+    margin: 0.5rem 0;
+  }
+
+  .health-section {
+    margin: 1rem 0;
   }
 
   .footer-section {
@@ -192,7 +208,7 @@ const themeColor = reading.us_color;
     }
 
     .container {
-      gap: 1.5rem;
+      gap: 2rem;
       max-width: 550px;
     }
 
@@ -203,7 +219,7 @@ const themeColor = reading.us_color;
 
   @media (min-width: 1024px) {
     .container {
-      gap: 1.75rem;
+      gap: 2.5rem;
       max-width: 500px;
     }
   }

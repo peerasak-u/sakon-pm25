@@ -1,105 +1,188 @@
 ---
 interface Props {
-  usCaption: string;     // Thai health advice
-  usCaptionEn: string;   // English health advice
+  usCaption: string;
+  usCaptionEn: string;
 }
 
 const { usCaption, usCaptionEn } = Astro.props;
+
+// Parse AQI level from caption to determine severity
+function getAQILevel(caption: string): 'low' | 'moderate' | 'high' | 'severe' {
+  const lower = caption.toLowerCase();
+  if (lower.includes('ดี') || lower.includes('good')) return 'low';
+  if (lower.includes('ปานกลาง') || lower.includes('moderate')) return 'moderate';
+  if (lower.includes('เฝ้าระวัง') || lower.includes('sensitive')) return 'moderate';
+  if (lower.includes('ไม่ดี') || lower.includes('unhealthy')) return 'high';
+  if (lower.includes('อันตราย') || lower.includes('hazardous')) return 'severe';
+  return 'moderate';
+}
+
+const level = getAQILevel(usCaption);
+
+const levelConfig = {
+  low: { glowIntensity: 0.3, borderOpacity: 0.2 },
+  moderate: { glowIntensity: 0.4, borderOpacity: 0.3 },
+  high: { glowIntensity: 0.5, borderOpacity: 0.4 },
+  severe: { glowIntensity: 0.6, borderOpacity: 0.5 }
+};
+
+const config = levelConfig[level];
+
+// Truncate captions for cleaner display
+function truncateCaption(caption: string, maxLength: number = 200): string {
+  if (caption.length <= maxLength) return caption;
+  return caption.substring(0, maxLength).trim() + '...';
+}
+
+const shortCaptionTh = truncateCaption(usCaption, 180);
+const shortCaptionEn = truncateCaption(usCaptionEn, 160);
 ---
 
-<div class="health-card">
-  <div class="health-icon">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-      <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
+<div class="glass-card" style={`--glow-intensity: ${config.glowIntensity}; --border-opacity: ${config.borderOpacity}`}>
+  <div class="glass-border"></div>
+  <div class="glass-content">
+    <p class="caption-th">{shortCaptionTh}</p>
+    <p class="caption-en">{shortCaptionEn}</p>
   </div>
-  
-  <div class="health-content">
-    <p class="health-thai">{usCaption}</p>
-    <p class="health-en">{usCaptionEn}</p>
-  </div>
+  <div class="glass-shine" aria-hidden="true"></div>
 </div>
 
 <style>
-  .health-card {
-    background: var(--color-bg-secondary);
-    border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 1.25rem;
-    max-width: 500px;
+  .glass-card {
+    position: relative;
     width: 100%;
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    backdrop-filter: blur(10px);
-    z-index: 10;
-    /* Dynamic subtle glow from theme */
-    box-shadow: 
-      0 4px 20px rgba(0, 0, 0, 0.3),
-      0 0 40px rgba(var(--theme-color), 0.08);
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    border-radius: 24px;
+    overflow: hidden;
+    
+    /* Frosted glass background */
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    
+    /* Glass border */
+    border: 1px solid rgba(255, 255, 255, var(--border-opacity, 0.3));
+    
+    /* Subtle glow based on AQI */
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 60px rgba(var(--theme-color), calc(var(--glow-intensity, 0.4) * 0.3));
+    
+    /* Smooth transitions */
+    transition: all 0.3s ease;
   }
 
-  .health-icon {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    color: rgb(var(--theme-color));
-    background: rgba(var(--theme-color), 0.15);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .glass-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    pointer-events: none;
+    
+    /* Gradient border effect */
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    padding: 1px;
   }
 
-  .health-icon svg {
-    width: 22px;
-    height: 22px;
+  .glass-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
   }
 
-  .health-content {
-    flex: 1;
-    min-width: 0;
+  .caption-th {
+    font-family: var(--font-thai);
+    font-size: 1.125rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 0.75rem 0;
   }
 
-  .health-thai {
+  .caption-en {
     font-family: var(--font-body);
     font-size: 0.9375rem;
-    line-height: 1.7;
-    color: var(--color-text-primary);
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.6);
     margin: 0;
   }
 
-  .health-en {
-    font-family: var(--font-body);
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-    margin: 0.625rem 0 0 0;
+  /* Glass shine reflection */
+  .glass-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.05) 40%,
+      transparent 100%
+    );
+    border-radius: 24px 24px 0 0;
+    pointer-events: none;
+    z-index: 1;
   }
 
+  /* Hover effect */
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      0 0 80px rgba(var(--theme-color), calc(var(--glow-intensity, 0.4) * 0.4));
+    transform: translateY(-2px);
+  }
+
+  /* Responsive */
   @media (min-width: 768px) {
-    .health-card {
-      padding: 1.5rem;
-      max-width: 550px;
+    .glass-card {
+      padding: 2rem;
+      border-radius: 28px;
     }
 
-    .health-icon {
-      width: 48px;
-      height: 48px;
+    .glass-border {
+      border-radius: 28px;
     }
 
-    .health-icon svg {
-      width: 26px;
-      height: 26px;
+    .glass-shine {
+      border-radius: 28px 28px 0 0;
     }
 
-    .health-thai {
-      font-size: 1.0625rem;
+    .caption-th {
+      font-size: 1.25rem;
     }
 
-    .health-en {
-      font-size: 0.9375rem;
+    .caption-en {
+      font-size: 1rem;
+    }
+  }
+
+  /* Safari fix for backdrop-filter */
+  @supports not (backdrop-filter: blur(20px)) {
+    .glass-card {
+      background: rgba(40, 40, 50, 0.85);
+    }
+  }
+
+  /* Reduced transparency for accessibility */
+  @media (prefers-reduced-transparency: reduce) {
+    .glass-card {
+      background: rgba(30, 30, 35, 0.95);
+      backdrop-filter: none;
     }
   }
 </style>

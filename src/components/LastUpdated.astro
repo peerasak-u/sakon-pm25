@@ -1,98 +1,109 @@
 ---
 interface Props {
-  logDatetime: string; // API format: "2026-04-11 19:00:00"
+  logDatetime: string;
 }
 
 const { logDatetime } = Astro.props;
 
-// Thai month names
-const thaiMonths = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
-
-// Convert to Thai Buddhist year (add 543)
-function formatThaiDate(datetime: string): string {
-  const date = new Date(datetime.replace(' ', 'T'));
-  const day = date.getDate();
-  const month = thaiMonths[date.getMonth()];
-  const year = date.getFullYear() + 543;
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  
-  return `${day} ${month} ${year}, ${hours}:${minutes} น.`;
+// Format datetime
+function formatTime(datetime: string): string {
+  try {
+    const date = new Date(datetime);
+    const bangkokTime = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+    
+    const hours = bangkokTime.getHours().toString().padStart(2, '0');
+    const minutes = bangkokTime.getMinutes().toString().padStart(2, '0');
+    const day = bangkokTime.getDate().toString().padStart(2, '0');
+    const month = (bangkokTime.getMonth() + 1).toString().padStart(2, '0');
+    const year = bangkokTime.getFullYear();
+    
+    return `${hours}:${minutes} · ${day}/${month}/${year}`;
+  } catch {
+    return datetime;
+  }
 }
 
-// Calculate freshness color
-function getFreshnessColor(datetime: string): string {
-  const updateTime = new Date(datetime.replace(' ', 'T')).getTime();
-  const now = Date.now();
-  const hoursSinceUpdate = (now - updateTime) / (1000 * 60 * 60);
-  
-  if (hoursSinceUpdate > 2) return '#ef4444'; // red - stale
-  if (hoursSinceUpdate > 1) return '#f97316'; // amber - getting old
-  return '#22c55e'; // green - fresh
-}
-
-const thaiFormatted = formatThaiDate(logDatetime);
-const pulseColor = getFreshnessColor(logDatetime);
+const formattedTime = formatTime(logDatetime);
+const isoTime = new Date(logDatetime).toISOString();
 ---
 
-<div class="last-updated">
-  <span class="pulse-dot" style={`--pulse-color: ${pulseColor}`}></span>
-  <span class="last-updated-label">อัปเดตล่าสุด / Last updated</span>
-  <span class="last-updated-time">{thaiFormatted}</span>
-</div>
+<footer class="last-updated">
+  <time datetime={isoTime} class="timestamp">
+    <span class="label">Updated</span>
+    <span class="time">{formattedTime}</span>
+  </time>
+  <div class="data-source">
+    <span class="source-label">Data from CCDC Station</span>
+  </div>
+</footer>
 
 <style>
   .last-updated {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: 0.5rem;
-    flex-wrap: wrap;
+    padding: 1rem 0;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+  }
+
+  .last-updated:hover {
+    opacity: 1;
+  }
+
+  .timestamp {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    color: var(--color-text-muted);
-    z-index: 10;
   }
 
-  .pulse-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--pulse-color);
-    flex-shrink: 0;
-    animation: pulse 2s ease-in-out infinite;
-    box-shadow: 0 0 8px var(--pulse-color);
-  }
-
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-      box-shadow: 0 0 8px var(--pulse-color);
-    }
-    50% {
-      opacity: 0.5;
-      transform: scale(1.4);
-      box-shadow: 0 0 16px var(--pulse-color);
-    }
-  }
-
-  .last-updated-label {
-    white-space: nowrap;
-  }
-
-  .last-updated-time {
-    white-space: nowrap;
+  .label {
+    font-size: 0.625rem;
     font-weight: 500;
-    color: var(--color-text-secondary);
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .pulse-dot {
-      animation: none;
+  .time {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.02em;
+  }
+
+  .data-source {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .source-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.05em;
+  }
+
+  /* Responsive */
+  @media (min-width: 768px) {
+    .last-updated {
+      gap: 0.625rem;
+    }
+
+    .label {
+      font-size: 0.6875rem;
+    }
+
+    .time {
+      font-size: 0.8125rem;
+    }
+
+    .source-label {
+      font-size: 0.6875rem;
     }
   }
 </style>
