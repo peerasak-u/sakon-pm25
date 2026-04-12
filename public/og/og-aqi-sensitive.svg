@@ -1,31 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
-    <linearGradient id="bg-sens" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1f120a"/>
-      <stop offset="100%" stop-color="#1a0f00"/>
-    </linearGradient>
-    <radialGradient id="glow-sens" cx="50%" cy="40%" r="50%">
-      <stop offset="0%" stop-color="rgba(255,126,0,0.3)"/>
-      <stop offset="60%" stop-color="rgba(255,126,0,0.1)"/>
+    <radialGradient id="bg1" cx="20%" cy="80%" r="70%">
+      <stop offset="0%" stop-color="#FF7E00"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
+    <radialGradient id="bg2" cx="80%" cy="20%" r="65%">
+      <stop offset="0%" stop-color="#ff9933"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="bg3" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#ff6600"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="bg4" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#ff5500"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    
+    <filter id="grain" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise"/>
+      <feColorMatrix type="saturate" values="0" result="grayNoise"/>
+      <feBlend in="grayNoise" in2="SourceGraphic" mode="overlay" result="blend"/>
+    </filter>
+    
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="100"/>
+    </filter>
   </defs>
   
-  <rect width="1200" height="630" fill="url(#bg-sens)"/>
-  <rect width="1200" height="630" fill="url(#glow-sens)"/>
+  <rect width="1200" height="630" fill="#1a1d21"/>
+  <ellipse cx="0" cy="630" rx="800" ry="600" fill="url(#bg1)" filter="url(#blur)" opacity="0.85"/>
+  <ellipse cx="1200" cy="0" rx="750" ry="550" fill="url(#bg2)" filter="url(#blur)" opacity="0.8"/>
+  <ellipse cx="600" cy="315" rx="700" ry="500" fill="url(#bg3)" filter="url(#blur)" opacity="0.75"/>
+  <ellipse cx="300" cy="100" rx="600" ry="450" fill="url(#bg4)" filter="url(#blur)" opacity="0.7"/>
+  <rect width="1200" height="630" fill="transparent" filter="url(#grain)" opacity="0.35"/>
   
-  <rect x="60" y="60" width="1080" height="4" fill="#FF7E00" opacity="0.6"/>
-  
-  <text x="600" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.9">สวนสมเด็จพระศรีนครินทร์</text>
-  <text x="600" y="210" font-family="system-ui, sans-serif" font-size="32" font-weight="400" fill="#FF7E00" text-anchor="middle" letter-spacing="2">Srisanakarin Park</text>
-  
-  <rect x="520" y="240" width="160" height="36" rx="18" fill="rgba(255,126,0,0.15)" stroke="#FF7E00" stroke-width="1"/>
-  <text x="600" y="265" font-family="system-ui, sans-serif" font-size="16" font-weight="500" fill="#FF7E00" text-anchor="middle">สกลนคร · Sakon Nakhon</text>
-  
-  <text x="600" y="400" font-family="system-ui, sans-serif" font-size="80" font-weight="700" fill="#FF7E00" text-anchor="middle">ไม่ดีต่อกลุ่มเสี่ยง</text>
-  <text x="600" y="470" font-family="system-ui, sans-serif" font-size="40" font-weight="300" fill="#ffffff" text-anchor="middle" opacity="0.8">Unhealthy for Sensitive</text>
-  
-  <text x="600" y="540" font-family="system-ui, sans-serif" font-size="24" font-weight="400" fill="#ffffff" text-anchor="middle" opacity="0.7">กลุ่มเสี่ยงควรเลี่ยง · Sensitive groups avoid</text>
-  
-  <rect x="60" y="580" width="1080" height="2" fill="#FF7E00" opacity="0.4"/>
+  <text x="600" y="295" font-family="system-ui, -apple-system, sans-serif" font-size="100" font-weight="700" fill="rgba(255,255,255,0.98)" text-anchor="middle" letter-spacing="-0.02em">Sensitive</text>
+  <text x="600" y="365" font-family="system-ui, sans-serif" font-size="26" font-weight="400" fill="rgba(255,255,255,0.55)" text-anchor="middle" letter-spacing="0.03em">Sraphangthong pond, Sakon Nakhon</text>
 </svg>
