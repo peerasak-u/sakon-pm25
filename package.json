@@ -6,9 +6,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "og:generate": "node scripts/svg-to-png.js"
   },
   "dependencies": {
-    "astro": "^5.5.0"
+    "@resvg/resvg-js": "^2.6.2",
+    "astro": "^5.5.0",
+    "playwright": "^1.59.1",
+    "sharp": "^0.34.5"
   }
 }

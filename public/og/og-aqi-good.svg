@@ -43,7 +43,9 @@
   <!-- Grain overlay -->
   <rect width="1200" height="630" fill="transparent" filter="url(#grain)" opacity="0.35"/>
   
-  <!-- Center text -->
-  <text x="600" y="295" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="130" font-weight="700" fill="rgba(255,255,255,0.98)" text-anchor="middle" letter-spacing="-0.02em">Good</text>
-  <text x="600" y="365" font-family="system-ui, sans-serif" font-size="26" font-weight="400" fill="rgba(255,255,255,0.55)" text-anchor="middle" letter-spacing="0.03em">Sraphangthong pond, Sakon Nakhon</text>
+  <!-- Center text group - vertically centered -->
+  <g transform="translate(0, 315)">
+    <text x="600" y="-50" font-family="Satoshi, system-ui, sans-serif" font-size="160" font-weight="700" fill="rgba(255,255,255,0.98)" text-anchor="middle" letter-spacing="-0.03em" dominant-baseline="middle">Good</text>
+    <text x="600" y="50" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="400" fill="rgba(255,255,255,0.55)" text-anchor="middle" letter-spacing="0.02em" dominant-baseline="middle">Sraphangthong pond, Sakon Nakhon</text>
+  </g>
 </svg>
