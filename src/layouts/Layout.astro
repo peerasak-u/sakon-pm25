@@ -47,7 +47,7 @@ const ctaMessages: Record<string, { th: string; en: string }> = {
 
 const cta = ctaMessages[aqiLevel] || ctaMessages['moderate'];
 const fullDescription = `${cta.th} | ${cta.en}`;
-const canonicalUrl = 'https://sakon-dust.pages.dev'; // Update with actual domain when available
+const canonicalUrl = 'https://sakon-pm25.pages.dev';
 ---
 
 <!DOCTYPE html>
@@ -73,7 +73,7 @@ const canonicalUrl = 'https://sakon-dust.pages.dev'; // Update with actual domai
     <meta property="og:image" content={`${canonicalUrl}${ogImage}`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:site_name" content="PM2.5 สกลนคร | Sakon Air Quality" />
     <meta property="og:locale" content="th_TH" />
     

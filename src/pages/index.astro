@@ -34,12 +34,12 @@ const aqiLevel = r.us_aqi <= 50 ? 'good' :
                  r.us_aqi <= 300 ? 'very-unhealthy' : 'hazardous';
 
 const assets = {
-  good: { favicon: '/favicon/favicon-good.svg', ogImage: '/og/og-aqi-good.png' },
-  moderate: { favicon: '/favicon/favicon-moderate.svg', ogImage: '/og/og-aqi-moderate.png' },
-  sensitive: { favicon: '/favicon/favicon-sensitive.svg', ogImage: '/og/og-aqi-sensitive.png' },
-  unhealthy: { favicon: '/favicon/favicon-unhealthy.svg', ogImage: '/og/og-aqi-unhealthy.png' },
-  'very-unhealthy': { favicon: '/favicon/favicon-very-unhealthy.svg', ogImage: '/og/og-aqi-very-unhealthy.png' },
-  hazardous: { favicon: '/favicon/favicon-hazardous.svg', ogImage: '/og/og-aqi-hazardous.png' }
+  good: { favicon: '/favicon/favicon-good.svg', ogImage: '/og/og-aqi-good.svg' },
+  moderate: { favicon: '/favicon/favicon-moderate.svg', ogImage: '/og/og-aqi-moderate.svg' },
+  sensitive: { favicon: '/favicon/favicon-sensitive.svg', ogImage: '/og/og-aqi-sensitive.svg' },
+  unhealthy: { favicon: '/favicon/favicon-unhealthy.svg', ogImage: '/og/og-aqi-unhealthy.svg' },
+  'very-unhealthy': { favicon: '/favicon/favicon-very-unhealthy.svg', ogImage: '/og/og-aqi-very-unhealthy.svg' },
+  hazardous: { favicon: '/favicon/favicon-hazardous.svg', ogImage: '/og/og-aqi-hazardous.svg' }
 }[aqiLevel];
 ---
 
