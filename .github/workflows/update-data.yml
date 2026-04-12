@@ -2,7 +2,7 @@ name: Update PM2.5 Data
 
 on:
   schedule:
-    - cron: '1 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 concurrency:
