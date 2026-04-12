@@ -20,7 +20,8 @@ A minimal, single-focus dashboard displaying current PM2.5 data from CCDC statio
 - 🇹🇭 **Bilingual** — Thai primary, English secondary
 - 📱 **Mobile-first** — Optimized for on-the-go checking
 - 🔄 **Auto-updating** — Hourly data refresh via GitHub Actions
-- 🖼️ **Social sharing** — OG image for link previews
+- 🖼️ **Social sharing** — Dynamic OG images for each AQI level
+- 🫧 **Atmospheric effects** — Subtle animated backgrounds
 
 ---
 
@@ -52,6 +53,7 @@ A minimal, single-focus dashboard displaying current PM2.5 data from CCDC statio
 | Deployment | Cloudflare Pages |
 | CI/CD | GitHub Actions (hourly data fetch) |
 | Fonts | Satoshi, Inter, JetBrains Mono |
+| OG Images | SVG → PNG generation via Playwright |
 
 ---
 
@@ -60,28 +62,37 @@ A minimal, single-focus dashboard displaying current PM2.5 data from CCDC statio
 ```
 .
 ├── .github/workflows/
-│   └── update-data.yml      # Hourly data fetch + deploy trigger
+│   └── update-data.yml        # Hourly data fetch + deploy trigger
+├── scripts/
+│   ├── debug-api.js           # API debugging utility
+│   ├── fetch-data.js          # Local data fetch script
+│   └── svg-to-png.js          # OG image generation
 ├── src/
-│   ├── components/          # Astro components
-│   │   ├── AQIStatus.astro      # Status badge with Thai/English
-│   │   ├── HealthCard.astro     # Health recommendation display
-│   │   ├── LastUpdated.astro    # Timestamp with freshness pulse
-│   │   ├── LocationHeader.astro # Station name display
-│   │   └── PM25Hero.astro       # Giant PM2.5 display with glow
+│   ├── components/            # Astro components
+│   │   ├── AQIStatus.astro        # Status badge with Thai/English
+│   │   ├── GlassCard.astro        # Frosted glass container
+│   │   ├── HealthCard.astro       # Health recommendation display
+│   │   ├── LastUpdated.astro      # Timestamp with freshness pulse
+│   │   ├── LiquidBackground.astro # Animated liquid background
+│   │   ├── LocationHeader.astro   # Station name display
+│   │   ├── ParticleBackground.astro # Floating particle effect
+│   │   └── PM25Hero.astro         # Giant PM2.5 display with glow
 │   ├── data/
-│   │   └── pm25-history.json    # Accumulated historical data
+│   │   └── pm25-history.json      # Accumulated historical data (90 days)
 │   ├── layouts/
-│   │   └── Layout.astro         # Base HTML layout
+│   │   └── Layout.astro           # Base HTML layout
 │   ├── pages/
-│   │   └── index.astro          # Main dashboard page
+│   │   └── index.astro            # Main dashboard page
 │   └── styles/
-│       └── global.css           # Global styles + fonts
+│       └── global.css             # Global styles + fonts
 ├── public/
-│   └── og/                      # OG images for social sharing
-├── astro.config.mjs         # Astro configuration
-├── wrangler.jsonc           # Cloudflare Pages config
-├── DESIGN.md                # Design system documentation
-└── README.md                # This file
+│   ├── favicon/               # Favicon files
+│   ├── fonts/                 # Self-hosted font files
+│   └── og/                    # AQI-specific OG images (6 variants)
+├── astro.config.mjs           # Astro configuration
+├── wrangler.jsonc             # Cloudflare Pages config
+├── DESIGN.md                  # Complete design system documentation
+└── README.md                  # This file
 ```
 
 ---
@@ -117,6 +128,9 @@ npm run build
 
 # Preview production build
 npm run preview
+
+# Generate OG images
+npm run og:generate
 ```
 
 ---
@@ -130,43 +144,37 @@ The `.github/workflows/update-data.yml` runs every hour at :01 minute:
 1. Fetches data from CCDC API
 2. Filters for station 4473
 3. Appends to `src/data/pm25-history.json`
-4. Commits and pushes changes
-5. Triggers Cloudflare Pages rebuild (if deploy hook configured)
+4. Keeps only last 90 days (2,160 hourly readings)
+5. Commits and pushes changes
+6. Triggers Cloudflare Pages rebuild (if deploy hook configured)
+
+### Local Data Fetch
+
+For testing the API connection locally:
+
+```bash
+# With .env file (see .env.sample)
+node scripts/fetch-data.js
+
+# Or with environment variables
+CCDC_API_URL=xxx CCDC_API_KEY=yyy node scripts/fetch-data.js
+```
 
 ### API Data Fields Used
 
 | Field | Usage |
 |-------|-------|
 | `pm25` | Primary value (large display) |
+| `pm10` | Secondary particulate reading |
 | `us_aqi` | US AQI standard for color coding |
+| `th_aqi` | Thailand AQI standard |
 | `us_title` / `us_title_en` | Status label |
 | `us_caption` / `us_caption_en` | Health recommendation |
 | `us_color` | RGB color for dynamic theming |
+| `temp` / `humid` | Temperature and humidity |
 | `log_datetime` | Last update timestamp |
 | `dustboy_name` / `dustboy_name_en` | Station name |
-
----
-
-## Design System
-
-See [DESIGN.md](./DESIGN.md) for complete design specifications.
-
-### Quick Reference
-
-**Colors**:
-- Rice Paper White (#FDFCF8) — Background
-- Charcoal Ink (#1C1917) — Text
-- Dynamic AQI colors from API
-
-**Typography**:
-- Satoshi — Display and headings
-- Inter — Body text (Thai optimized)
-- JetBrains Mono — Timestamps
-
-**Layout**:
-- Single-page, vertical stack
-- Hero element: Giant PM2.5 number
-- Mobile-first, responsive
+| `dustboy_lat` / `dustboy_lon` | Station coordinates |
 
 ---
 
@@ -200,6 +208,8 @@ Required for GitHub Action (repository secrets):
 | `CCDC_API_URL` | CCDC API endpoint |
 | `CCDC_API_KEY` | CCDC API key |
 | `CLOUDFLARE_DEPLOY_HOOK` | (Optional) Pages deploy hook URL |
+
+For local development, copy `.env.sample` to `.env` and fill in your credentials.
 
 No environment variables needed for the static site itself — all data is baked at build time.
 
