@@ -3452,7 +3452,21 @@
       "us_title_en": "Moderate",
       "us_caption": "ประชาชนที่ไวต่อมลพิษมากกว่าคนทั่วไปควรลดการออกแรงหนักหรือเวลานานสังเกตอาการไอหรือหอบ, ประชาชนกลุ่มเสี่ยงและประชาชนทั่วไปสามารถใช้ชีวิตได้ปกติ",
       "us_caption_en": "Air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
+    },
+    {
+      "datetime": "2026-04-28 15:00:00",
+      "pm25": 25,
+      "pm10": 26,
+      "us_aqi": 78,
+      "th_aqi": 50,
+      "us_color": "253,192,78",
+      "temp": "32.04",
+      "humid": "52.20",
+      "us_title": "คุณภาพอากาศปานกลาง",
+      "us_title_en": "Moderate",
+      "us_caption": "ประชาชนที่ไวต่อมลพิษมากกว่าคนทั่วไปควรลดการออกแรงหนักหรือเวลานานสังเกตอาการไอหรือหอบ, ประชาชนกลุ่มเสี่ยงและประชาชนทั่วไปสามารถใช้ชีวิตได้ปกติ",
+      "us_caption_en": "Air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
     }
   ],
-  "last_updated": "2026-04-28T07:47:32.626Z"
+  "last_updated": "2026-04-28T08:49:00.187Z"
 }
