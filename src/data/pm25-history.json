@@ -11516,7 +11516,21 @@
       "us_title_en": "Good",
       "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
       "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
+    },
+    {
+      "datetime": "2026-05-24 18:00:00",
+      "pm25": 10,
+      "pm10": 11,
+      "us_aqi": 42,
+      "th_aqi": 17,
+      "us_color": "0, 153, 107",
+      "temp": "31.15",
+      "humid": "55.80",
+      "us_title": "คุณภาพอากาศดี",
+      "us_title_en": "Good",
+      "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
+      "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
     }
   ],
-  "last_updated": "2026-05-24T10:49:24.923Z"
+  "last_updated": "2026-05-24T11:28:31.668Z"
 }
