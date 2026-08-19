@@ -10,20 +10,6 @@
   },
   "readings": [
     {
-      "datetime": "2026-04-17 09:00:00",
-      "pm25": 49,
-      "pm10": 57,
-      "us_aqi": 134,
-      "th_aqi": 131,
-      "us_color": "235, 132, 63",
-      "temp": "33.70",
-      "humid": "46.90",
-      "us_title": "คุณภาพอากาศไม่ดีต่อกลุ่มเสี่ยง",
-      "us_title_en": "Unhealthy for Sensitive Groups",
-      "us_caption": "ประชาชนที่ไวต่อมลพิษมากกว่าคนทั่วไปควรลดการออกแรงหนักหรือเวลานานสังเกตอาการไอหรือหอบ และควรงดกิจกรรมนอกอาคาร, ประชาชนกลุ่มเสี่ยงควรงดกิจกรรมนอกอาคารที่ใช้แรงหนักหรือเป็นเวลานาน สามารถทำกิจกรรมนอกอาคารได้ แต่ไม่ควรออกแรงมากและควรพักบ่อยๆ สังเกตอาการไอหรือหอบ, ประชาชนทั่วไปสามารถใช้ชีวิตได้ตามปกติ, โรงเรียนหรือสถานศึกษาควรลดกิจกรรมกลางแจ้งที่ใช้แรงหนักหรือเป็นเวลานานและต้องจัดเตรียมหน้ากากอนามัยและห้องสะอาดสำหรับนักเรียนที่มีความเสี่ยง",
-      "us_caption_en": "Members of sensitive groups may experience health effects. The general public is not likely to be affected."
-    },
-    {
       "datetime": "2026-04-17 11:00:00",
       "pm25": 33,
       "pm10": 38,
@@ -30248,7 +30234,21 @@
       "us_title_en": "Good",
       "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
       "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
+    },
+    {
+      "datetime": "2026-08-19 10:00:00",
+      "pm25": 2,
+      "pm10": 2,
+      "us_aqi": 8,
+      "th_aqi": 3,
+      "us_color": "0, 153, 107",
+      "temp": "25.17",
+      "humid": "76.99",
+      "us_title": "คุณภาพอากาศดี",
+      "us_title_en": "Good",
+      "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
+      "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
     }
   ],
-  "last_updated": "2026-08-19T02:14:20.210Z"
+  "last_updated": "2026-08-19T03:11:31.198Z"
 }
