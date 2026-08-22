@@ -10,20 +10,6 @@
   },
   "readings": [
     {
-      "datetime": "2026-04-21 01:00:00",
-      "pm25": 22,
-      "pm10": 23,
-      "us_aqi": 71,
-      "th_aqi": 43,
-      "us_color": "253,192,78",
-      "temp": "26.22",
-      "humid": "67.44",
-      "us_title": "คุณภาพอากาศปานกลาง",
-      "us_title_en": "Moderate",
-      "us_caption": "ประชาชนที่ไวต่อมลพิษมากกว่าคนทั่วไปควรลดการออกแรงหนักหรือเวลานานสังเกตอาการไอหรือหอบ, ประชาชนกลุ่มเสี่ยงและประชาชนทั่วไปสามารถใช้ชีวิตได้ปกติ",
-      "us_caption_en": "Air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
-    },
-    {
       "datetime": "2026-04-21 02:00:00",
       "pm25": 25,
       "pm10": 26,
@@ -30248,7 +30234,21 @@
       "us_title_en": "Good",
       "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
       "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
+    },
+    {
+      "datetime": "2026-08-23 02:00:00",
+      "pm25": 5,
+      "pm10": 5,
+      "us_aqi": 21,
+      "th_aqi": 8,
+      "us_color": "0, 153, 107",
+      "temp": "24.48",
+      "humid": "77.08",
+      "us_title": "คุณภาพอากาศดี",
+      "us_title_en": "Good",
+      "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
+      "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
     }
   ],
-  "last_updated": "2026-08-22T18:55:46.535Z"
+  "last_updated": "2026-08-22T19:18:31.776Z"
 }
