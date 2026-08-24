@@ -10,20 +10,6 @@
   },
   "readings": [
     {
-      "datetime": "2026-04-29 03:00:00",
-      "pm25": 9,
-      "pm10": 9,
-      "us_aqi": 38,
-      "th_aqi": 15,
-      "us_color": "0, 153, 107",
-      "temp": "24.50",
-      "humid": "69.63",
-      "us_title": "คุณภาพอากาศดี",
-      "us_title_en": "Good",
-      "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
-      "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
-    },
-    {
       "datetime": "2026-04-29 04:00:00",
       "pm25": 9,
       "pm10": 10,
@@ -30248,7 +30234,21 @@
       "us_title_en": "Good",
       "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
       "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
+    },
+    {
+      "datetime": "2026-08-25 02:00:00",
+      "pm25": 10,
+      "pm10": 11,
+      "us_aqi": 42,
+      "th_aqi": 17,
+      "us_color": "0, 153, 107",
+      "temp": "23.91",
+      "humid": "81.83",
+      "us_title": "คุณภาพอากาศดี",
+      "us_title_en": "Good",
+      "us_caption": "ประชาชนสามารถทำกิจกรรมต่างๆ ได้ตามปกติ",
+      "us_caption_en": "Air quality is considered satisfactory, and air pollution poses little or no risk"
     }
   ],
-  "last_updated": "2026-08-24T18:59:11.294Z"
+  "last_updated": "2026-08-24T19:32:33.098Z"
 }
